@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" class="transition-colors duration-300">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام الوكالة الاحترافي | Pro Agency</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        slate: { 850: '#151f32', 950: '#020617' }
+                    },
+                    fontFamily: { sans: ['Tajawal', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        body { font-family: 'Tajawal', sans-serif; }
+        
+        /* Custom Animations */
+        .fade-in { animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.15); }
+
+        /* Status Badges */
+        .status-badge { @apply px-3 py-1 rounded-full text-xs font-bold inline-flex items-center gap-1; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { @apply bg-slate-300 dark:bg-slate-700 rounded-full; }
+        ::-webkit-scrollbar-thumb:hover { @apply bg-slate-400 dark:bg-slate-600; }
+
+        /* Mobile Responsive Table to Cards */
+        @media (max-width: 768px) {
+            .responsive-table thead { display: none; }
+            .responsive-table tbody tr { 
+                display: flex; 
+                flex-direction: column; 
+                background: white; 
+                margin-bottom: 1rem; 
+                border-radius: 1rem; 
+                padding: 1rem; 
+                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                border: 1px solid #e2e8f0;
+            }
+            .dark .responsive-table tbody tr {
+                background: #1e293b;
+                border-color: #334155;
+            }
+            .responsive-table td { 
+                padding: 0.5rem 0; 
+                border: none !important;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                text-align: right;
+            }
+            .responsive-table td::before {
+                content: attr(data-label);
+                font-weight: bold;
+                color: #64748b;
+                font-size: 0.75rem;
+                margin-left: 1rem;
+            }
+            .responsive-table td:last-child {
+                justify-content: center;
+                margin-top: 0.5rem;
+                padding-top: 1rem;
+                border-top: 1px dashed #e2e8f0 !important;
+            }
+            .dark .responsive-table td:last-child {
+                border-color: #334155 !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 antialiased selection:bg-indigo-500 selection:text-white transition-colors duration-300">
+
+    <!-- Notifications -->
+    <div id="notification-area" class="fixed top-6 left-6 z-[100] flex flex-col gap-3 pointer-events-none"></div>
+
+    <!-- 1. LOGIN SCREEN -->
+    <section id="login-screen" class="h-screen flex items-center justify-center bg-[url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop')] bg-cover bg-center relative">
+        <div class="absolute inset-0 bg-indigo-950/90 backdrop-blur-sm"></div>
+        <div class="bg-white/95 dark:bg-slate-900/95 p-10 rounded-3xl shadow-2xl w-full max-w-md fade-in relative z-10 border border-white/10 backdrop-blur-md">
+            <div class="text-center mb-10">
+                <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-indigo-600 text-white mb-6 shadow-lg rotate-3 hover:rotate-6 transition duration-300">
+                    <i class="fas fa-cube text-4xl"></i>
+                </div>
+                <h2 class="text-3xl font-extrabold text-slate-800 dark:text-white">بوابة الإدارة</h2>
+                <p class="text-slate-500 dark:text-slate-400 mt-2 font-medium">نظام الوكالة المتطور</p>
+            </div>
+            <form id="login-form" onsubmit="handleLogin(event)">
+                <div class="mb-5">
+                    <label class="block text-slate-700 dark:text-slate-300 text-sm font-bold mb-2">اسم المستخدم</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400"><i class="fas fa-user"></i></span>
+                        <input type="text" id="username" class="w-full pr-10 pl-4 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" placeholder="Username" required>
+                    </div>
+                </div>
+                <div class="mb-8">
+                    <label class="block text-slate-700 dark:text-slate-300 text-sm font-bold mb-2">كلمة المرور</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400"><i class="fas fa-lock"></i></span>
+                        <input type="password" id="password" class="w-full pr-10 pl-4 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" placeholder="••••••••" required>
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-4 rounded-xl hover:bg-indigo-700 transition duration-300 shadow-lg shadow-indigo-500/30 transform active:scale-95">
+                    تسجيل الدخول <i class="fas fa-arrow-left mr-2"></i>
+                </button>
+            </form>
+            <div class="mt-6 text-center text-xs text-slate-400 bg-slate-100 dark:bg-slate-800 py-2 rounded-lg">
+                معلومات تجريبية: admin / admin
+            </div>
+        </div>
+    </section>
+
+    <!-- 2. MAIN DASHBOARD -->
+    <section id="dashboard-screen" class="hidden-section min-h-screen flex flex-col md:flex-row bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
+        
+        <!-- Sidebar -->
+        <aside class="w-full md:w-72 bg-slate-900 dark:bg-slate-950 text-white flex-shrink-0 flex flex-col shadow-2xl z-20 md:h-screen sticky top-0">
+            <div class="p-6 flex items-center justify-between border-b border-slate-800">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                        <i class="fas fa-layer-group text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-lg leading-tight">الوكالة</h1>
+                        <span class="text-xs text-slate-400 font-normal">لوحة التحكم</span>
+                    </div>
+                </div>
+                <button class="md:hidden text-slate-400 hover:text-white transition" onclick="toggleMobileMenu()"><i class="fas fa-bars text-xl"></i></button>
+            </div>
+            
+            <nav id="sidebar-nav" class="flex-1 p-4 space-y-2 overflow-y-auto hidden md:block">
+                <p class="px-4 text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 mt-2">إدارة العمل</p>
+                <button onclick="switchTab('orders')" id="nav-orders" class="nav-btn w-full text-right px-4 py-3.5 rounded-xl hover:bg-slate-800 transition flex items-center gap-3 text-slate-300 font-medium group">
+                    <span class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition"><i class="fas fa-clipboard-list"></i></span>
+                    الطلبات والعملاء
+                </button>
+                <button onclick="switchTab('marketers')" id="nav-marketers" class="nav-btn w-full text-right px-4 py-3.5 rounded-xl hover:bg-slate-800 transition flex items-center gap-3 text-slate-300 font-medium group">
+                    <span class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition"><i class="fas fa-bullhorn"></i></span>
+                    المسوقين والنسب
+                </button>
+                <button onclick="switchTab('designers')" id="nav-designers" class="nav-btn w-full text-right px-4 py-3.5 rounded-xl hover:bg-slate-800 transition flex items-center gap-3 text-slate-300 font-medium group">
+                    <span class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center group-hover:bg-purple-600 group-hover:text-white transition"><i class="fas fa-palette"></i></span>
+                    المصممين
+                </button>
+                
+                <p class="px-4 text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 mt-6">النظام</p>
+                <button onclick="switchTab('users')" id="nav-users" id="users-tab-btn" class="nav-btn w-full text-right px-4 py-3.5 rounded-xl hover:bg-slate-800 transition flex items-center gap-3 text-slate-300 font-medium group">
+                    <span class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition"><i class="fas fa-users-cog"></i></span>
+                    المستخدمين
+                </button>
+                <button onclick="switchTab('settings')" id="nav-settings" class="nav-btn w-full text-right px-4 py-3.5 rounded-xl hover:bg-slate-800 transition flex items-center gap-3 text-slate-300 font-medium group">
+                    <span class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center group-hover:bg-orange-500 group-hover:text-white transition"><i class="fas fa-database"></i></span>
+                    نسخ احتياطي
+                </button>
+            </nav>
+
+            <div class="p-4 border-t border-slate-800 bg-slate-900/50">
+                <button onclick="toggleDarkMode()" class="w-full mb-3 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center justify-center gap-2 text-sm">
+                    <i class="fas fa-moon"></i> الوضع الليلي
+                </button>
+                <button onclick="logout()" class="w-full px-4 py-3 rounded-xl bg-red-600/10 hover:bg-red-600 text-red-400 hover:text-white transition flex items-center justify-center gap-2 font-bold text-sm">
+                    <i class="fas fa-sign-out-alt"></i> تسجيل خروج
+                </button>
+            </div>
+        </aside>
+
+        <!-- Content Area -->
+        <main class="flex-1 p-4 md:p-8 overflow-y-auto h-screen relative">
+            
+            <!-- Header -->
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                <div>
+                    <h2 class="text-2xl md:text-3xl font-extrabold text-slate-800 dark:text-white tracking-tight" id="page-title">لوحة التحكم</h2>
+                    <p class="text-slate-500 dark:text-slate-400 text-sm mt-1" id="current-date"></p>
+                </div>
+                <div class="flex items-center gap-3 bg-white dark:bg-slate-800 p-2 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
+                    <div class="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-lg" id="user-avatar">A</div>
+                    <div class="hidden md:block px-2">
+                        <div class="text-sm font-bold text-slate-800 dark:text-white" id="user-name-display">Admin</div>
+                        <div class="text-xs text-slate-500 dark:text-slate-400">مدير النظام</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STATS CARDS -->
+            <div id="stats-overview" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 fade-in">
+                <!-- Total Orders -->
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 card-hover">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase mb-1">إجمالي الطلبات</p>
+                            <h3 class="text-2xl font-black text-slate-800 dark:text-white" id="stat-total-orders">0</h3>
+                        </div>
+                        <div class="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center"><i class="fas fa-folder-open text-lg"></i></div>
+                    </div>
+                </div>
+                <!-- Revenue -->
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 card-hover">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase mb-1">الخزينة (المدفوع)</p>
+                            <h3 class="text-2xl font-black text-emerald-600 dark:text-emerald-400 dir-ltr" id="stat-revenue">0</h3>
+                        </div>
+                        <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center"><i class="fas fa-wallet text-lg"></i></div>
+                    </div>
+                </div>
+                <!-- Debt (New Logic) -->
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 card-hover">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase mb-1">مديونيات (لنا)</p>
+                            <h3 class="text-2xl font-black text-orange-500 dark:text-orange-400 dir-ltr" id="stat-debt">0</h3>
+                        </div>
+                        <div class="w-10 h-10 rounded-xl bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 flex items-center justify-center"><i class="fas fa-hand-holding-usd text-lg"></i></div>
+                    </div>
+                </div>
+                <!-- Late Tasks -->
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 card-hover">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase mb-1">تأخيرات (24H)</p>
+                            <h3 class="text-2xl font-black text-red-600 dark:text-red-400" id="stat-late-tasks">0</h3>
+                        </div>
+                        <div class="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 flex items-center justify-center"><i class="fas fa-alarm-clock text-lg"></i></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 1: ORDERS -->
+            <div id="tab-orders" class="tab-content fade-in">
+                <!-- Advanced Controls -->
+                <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+                    <div class="flex w-full md:w-auto gap-2">
+                         <button onclick="openModal('order-modal')" class="flex-1 md:flex-none bg-indigo-600 text-white px-6 py-2.5 rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-500/30 transition flex items-center justify-center gap-2 font-bold">
+                            <i class="fas fa-plus"></i> <span class="hidden md:inline">طلب جديد</span><span class="md:hidden">إضافة</span>
+                        </button>
+                    </div>
+                    
+                    <div class="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+                        <!-- Date Filter -->
+                        <div class="relative w-full md:w-40">
+                            <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 pointer-events-none"><i class="fas fa-calendar-alt"></i></span>
+                            <select id="filter-date" onchange="renderOrders()" class="w-full pr-10 pl-4 py-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 dark:text-white cursor-pointer appearance-none">
+                                <option value="all">كل الأوقات</option>
+                                <option value="today">اليوم</option>
+                                <option value="week">هذا الأسبوع</option>
+                                <option value="month">هذا الشهر</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Status Filter -->
+                        <div class="relative w-full md:w-40">
+                             <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 pointer-events-none"><i class="fas fa-filter"></i></span>
+                            <select id="filter-status" onchange="renderOrders()" class="w-full pr-10 pl-4 py-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 dark:text-white cursor-pointer appearance-none">
+                                <option value="all">كل الحالات</option>
+                                <option value="pending">قيد التنفيذ</option>
+                                <option value="review">مراجعة</option>
+                                <option value="done">مكتمل</option>
+                                <option value="rejected">مرفوض</option>
+                            </select>
+                        </div>
+
+                        <!-- Search -->
+                         <div class="relative w-full md:w-64">
+                            <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 pointer-events-none"><i class="fas fa-search"></i></span>
+                            <input type="text" id="search-orders" onkeyup="renderOrders()" class="w-full pr-10 pl-4 py-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 dark:text-white" placeholder="بحث (اسم، رقم)...">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Responsive Table/Grid -->
+                <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-right responsive-table">
+                            <thead class="bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 text-xs uppercase font-bold tracking-wider">
+                                <tr>
+                                    <th class="p-5">العميل</th>
+                                    <th class="p-5">تفاصيل الخدمة</th>
+                                    <th class="p-5">المالية</th>
+                                    <th class="p-5 text-center">عربون</th>
+                                    <th class="p-5">الفريق</th>
+                                    <th class="p-5">الحالة</th>
+                                    <th class="p-5 text-center">تحكم</th>
+                                </tr>
+                            </thead>
+                            <tbody id="orders-table-body" class="text-sm divide-y divide-slate-100 dark:divide-slate-700 font-medium text-slate-700 dark:text-slate-200">
+                                <!-- JS Generated -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="empty-orders-state" class="hidden p-10 text-center">
+                        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-400 mb-4">
+                            <i class="fas fa-inbox text-2xl"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-700 dark:text-slate-300">لا توجد طلبات</h3>
+                        <p class="text-slate-500 dark:text-slate-500">حاول تغيير الفلتر أو أضف طلب جديد</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: MARKETERS -->
+            <div id="tab-marketers" class="tab-content hidden-section fade-in">
+                <div class="flex justify-between items-center mb-6">
+                    <button onclick="openModal('staff-modal', 'marketer')" class="bg-emerald-600 text-white px-6 py-2.5 rounded-xl hover:bg-emerald-700 shadow-lg shadow-emerald-500/30 transition font-bold">
+                        <i class="fas fa-plus"></i> إضافة مسوق
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="marketers-grid">
+                    <!-- JS Generated -->
+                </div>
+            </div>
+
+            <!-- TAB 3: DESIGNERS -->
+            <div id="tab-designers" class="tab-content hidden-section fade-in">
+                <div class="flex justify-between items-center mb-6">
+                    <button onclick="openModal('staff-modal', 'designer')" class="bg-purple-600 text-white px-6 py-2.5 rounded-xl hover:bg-purple-700 shadow-lg shadow-purple-500/30 transition font-bold">
+                        <i class="fas fa-plus"></i> إضافة مصمم
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 gap-6" id="designers-grid">
+                    <!-- JS Generated -->
+                </div>
+            </div>
+
+            <!-- TAB 4: USERS -->
+            <div id="tab-users" class="tab-content hidden-section fade-in">
+                <div class="flex justify-between items-center mb-6">
+                    <button onclick="openModal('user-modal')" class="bg-slate-800 dark:bg-slate-700 text-white px-6 py-2.5 rounded-xl hover:bg-slate-900 shadow-lg transition font-bold">
+                        <i class="fas fa-user-shield"></i> إضافة مستخدم
+                    </button>
+                </div>
+                <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden max-w-3xl mx-auto">
+                    <table class="w-full text-right">
+                        <thead class="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
+                            <tr>
+                                <th class="p-4 text-slate-500 font-bold">المستخدم</th>
+                                <th class="p-4 text-slate-500 font-bold">الصلاحية</th>
+                                <th class="p-4 text-slate-500 font-bold">إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-table-body" class="divide-y divide-slate-100 dark:divide-slate-700 text-slate-700 dark:text-slate-300"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB 5: SETTINGS -->
+            <div id="tab-settings" class="tab-content hidden-section fade-in">
+                <div class="max-w-2xl mx-auto space-y-6">
+                    <div class="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+                        <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-4 border-b dark:border-slate-700 pb-2"><i class="fas fa-database text-orange-500"></i> النسخ الاحتياطي</h3>
+                        <p class="text-slate-500 dark:text-slate-400 mb-6 text-sm">
+                            البيانات محفوظة على هذا الجهاز فقط. قم بتحميل نسخة احتياطية بانتظام.
+                        </p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <button onclick="exportData()" class="flex flex-col items-center justify-center p-6 border-2 border-dashed border-indigo-200 dark:border-indigo-800 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition group">
+                                <i class="fas fa-download text-3xl text-indigo-400 group-hover:text-indigo-600 mb-3"></i>
+                                <span class="font-bold text-indigo-700 dark:text-indigo-400">تحميل نسخة (Export)</span>
+                            </button>
+                            <label class="flex flex-col items-center justify-center p-6 border-2 border-dashed border-emerald-200 dark:border-emerald-800 rounded-xl hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition cursor-pointer group h-full">
+                                <input type="file" accept=".json" class="hidden" onchange="importData(this)">
+                                <i class="fas fa-upload text-3xl text-emerald-400 group-hover:text-emerald-600 mb-3"></i>
+                                <span class="font-bold text-emerald-700 dark:text-emerald-400">استعادة نسخة (Import)</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </section>
+
+    <!-- MODAL: ORDER -->
+    <div id="order-modal" class="fixed inset-0 bg-slate-900/80 hidden z-50 flex items-center justify-center backdrop-blur-sm transition-opacity duration-300 p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 md:p-8 shadow-2xl border border-slate-200 dark:border-slate-700 fade-in">
+            <div class="flex justify-between items-center mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">
+                <h3 class="text-2xl font-bold text-slate-800 dark:text-white" id="modal-title">بيانات الطلب</h3>
+                <button onclick="closeModal('order-modal')" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-red-500 transition flex items-center justify-center"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="order-form" onsubmit="saveOrder(event)">
+                <input type="hidden" id="order-id">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">اسم العميل</label>
+                        <input type="text" id="client-name" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 dark:text-white transition" required placeholder="الاسم">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">رقم الهاتف</label>
+                        <input type="tel" id="client-phone" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 dark:text-white transition" placeholder="01xxxxxxxxx">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">نوع الخدمة</label>
+                        <select id="service-type" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 dark:text-white transition">
+                            <option value="بوستر">🎨 بوستر (Social Media)</option>
+                            <option value="غلاف">🖼️ غلاف (Cover)</option>
+                            <option value="لوجو">✒️ شعار (Logo)</option>
+                            <option value="فيديو">🎬 فيديو (Reels)</option>
+                            <option value="هوية">💼 هوية بصرية</option>
+                            <option value="آخر">✨ أخرى</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">إجمالي السعر</label>
+                        <input type="number" id="order-price" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 dark:text-white font-bold" placeholder="0.00" oninput="calculateRemaining()">
+                    </div>
+                </div>
+
+                <div class="bg-indigo-50 dark:bg-indigo-900/20 p-5 rounded-2xl mb-5 border border-indigo-100 dark:border-indigo-800">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-5 items-end">
+                        <div class="flex items-center gap-3 mb-2 md:mb-0 bg-white dark:bg-slate-800 p-3 rounded-xl border border-indigo-100 dark:border-indigo-900">
+                            <input type="checkbox" id="deposit-paid" class="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500 cursor-pointer">
+                            <label for="deposit-paid" class="font-bold text-slate-700 dark:text-slate-300 cursor-pointer select-none">عربون؟</label>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-indigo-500 mb-1 uppercase">المدفوع</label>
+                            <input type="number" id="amount-paid" class="w-full bg-white dark:bg-slate-800 border border-indigo-200 dark:border-indigo-900 rounded-xl px-3 py-2 text-indigo-700 dark:text-indigo-400 font-bold" placeholder="0" oninput="calculateRemaining()">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-red-500 mb-1 uppercase">المتبقي</label>
+                            <input type="text" id="amount-remaining" class="w-full bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900 rounded-xl px-3 py-2 text-red-600 dark:text-red-400 font-bold" readonly value="0">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">المسوق</label>
+                        <select id="order-marketer" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 dark:text-white transition">
+                            <option value="">-- مباشر --</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">المصمم</label>
+                        <select id="order-designer" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 dark:text-white transition">
+                            <option value="">-- اختر مصمم --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mb-8">
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">الحالة</label>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="status-radio" value="pending" class="peer hidden" checked onchange="updateStatusSelect('pending')">
+                            <div class="py-2 text-center rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 peer-checked:bg-yellow-100 peer-checked:text-yellow-700 font-bold transition">قيد التنفيذ</div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="status-radio" value="review" class="peer hidden" onchange="updateStatusSelect('review')">
+                            <div class="py-2 text-center rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 peer-checked:bg-blue-100 peer-checked:text-blue-700 font-bold transition">مراجعة</div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="status-radio" value="done" class="peer hidden" onchange="updateStatusSelect('done')">
+                            <div class="py-2 text-center rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 peer-checked:bg-emerald-100 peer-checked:text-emerald-700 font-bold transition">مكتمل</div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="status-radio" value="rejected" class="peer hidden" onchange="updateStatusSelect('rejected')">
+                            <div class="py-2 text-center rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 peer-checked:bg-red-100 peer-checked:text-red-700 font-bold transition">مرفوض</div>
+                        </label>
+                    </div>
+                    <select id="order-status" class="hidden"><option value="pending"></option></select>
+                </div>
+
+                <div class="flex gap-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                    <button type="submit" class="flex-1 bg-indigo-600 text-white py-3.5 rounded-xl hover:bg-indigo-700 font-bold shadow-lg shadow-indigo-500/30 transition">حفظ</button>
+                    <button type="button" onclick="closeModal('order-modal')" class="px-8 py-3.5 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold transition">إلغاء</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- STAFF MODAL -->
+    <div id="staff-modal" class="fixed inset-0 bg-slate-900/80 hidden z-50 flex items-center justify-center backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-md p-8 shadow-2xl fade-in border border-slate-200 dark:border-slate-700">
+            <h3 class="text-xl font-bold mb-6 text-slate-800 dark:text-white" id="staff-modal-title">إضافة موظف</h3>
+            <form onsubmit="saveStaff(event)">
+                <input type="hidden" id="staff-role">
+                <div class="mb-4">
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">الاسم</label>
+                    <input type="text" id="staff-name" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 dark:text-white" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">رقم الهاتف</label>
+                    <input type="text" id="staff-phone" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 dark:text-white">
+                </div>
+                
+                <div id="marketer-fields" class="hidden p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl mb-4 border border-emerald-100 dark:border-emerald-900">
+                    <label class="block text-sm font-bold text-emerald-800 dark:text-emerald-400 mb-2">نسبة العمولة (%)</label>
+                    <input type="number" id="staff-commission" class="w-full bg-white dark:bg-slate-800 border border-emerald-200 dark:border-emerald-900 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 dark:text-white" placeholder="مثلاً: 10">
+                </div>
+
+                <div id="designer-fields" class="hidden p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl mb-4 border border-purple-100 dark:border-purple-900 space-y-4">
+                    <div>
+                        <label class="block text-sm font-bold text-purple-800 dark:text-purple-400 mb-2">التخصص</label>
+                        <input type="text" id="staff-specialty" class="w-full bg-white dark:bg-slate-800 border border-purple-200 dark:border-purple-900 rounded-xl px-4 py-3 focus:ring-2 focus:ring-purple-500 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-purple-800 dark:text-purple-400 mb-2">محفظة (كاش)</label>
+                        <input type="text" id="staff-wallet" class="w-full bg-white dark:bg-slate-800 border border-purple-200 dark:border-purple-900 rounded-xl px-4 py-3 focus:ring-2 focus:ring-purple-500 dark:text-white">
+                    </div>
+                </div>
+
+                <div class="flex gap-3 mt-6">
+                    <button type="submit" class="flex-1 bg-indigo-600 text-white py-3 rounded-xl hover:bg-indigo-700 font-bold">حفظ</button>
+                    <button type="button" onclick="closeModal('staff-modal')" class="px-6 py-3 border rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 font-bold text-slate-600 dark:text-slate-400">إغلاق</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- USER MODAL -->
+    <div id="user-modal" class="fixed inset-0 bg-slate-900/80 hidden z-50 flex items-center justify-center backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-md p-8 shadow-2xl border border-slate-200 dark:border-slate-700">
+            <h3 class="text-xl font-bold mb-6 text-slate-800 dark:text-white">إضافة مستخدم جديد</h3>
+            <form onsubmit="saveUser(event)">
+                <div class="mb-4">
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">اسم المستخدم</label>
+                    <input type="text" id="new-username" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 dark:text-white" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">كلمة المرور</label>
+                    <input type="text" id="new-password" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 dark:text-white" required>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">الدور</label>
+                    <select id="new-role" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 dark:text-white">
+                        <option value="assistant">مساعد (Assistant)</option>
+                        <option value="admin">مدير (Admin)</option>
+                    </select>
+                </div>
+                <button type="submit" class="w-full bg-slate-800 dark:bg-slate-700 text-white py-3 rounded-xl hover:bg-slate-900 dark:hover:bg-slate-600 font-bold">إضافة</button>
+                <button type="button" onclick="closeModal('user-modal')" class="w-full mt-2 py-3 text-slate-500 dark:text-slate-400">إلغاء</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA & CONFIG ---
+        const defaultData = {
+            users: [{ id: 1, username: 'admin', password: 'admin', role: 'admin' }],
+            staff: [],
+            orders: []
+        };
+
+        let db = JSON.parse(localStorage.getItem('agencyDB')) || defaultData;
+        let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
+
+        // Dark Mode Logic
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            localStorage.setItem('darkMode', isDark);
+            
+            // Fix Chart.js colors on toggle
+            if(Chart.defaults) {
+                Chart.defaults.color = isDark ? '#94a3b8' : '#64748b';
+                Chart.defaults.borderColor = isDark ? '#334155' : '#e2e8f0';
+            }
+        }
+        
+        // Init Dark Mode
+        if(localStorage.getItem('darkMode') === 'true') {
+            document.documentElement.classList.add('dark');
+        }
+
+        // Date Display
+        document.getElementById('current-date').innerText = new Date().toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+        // --- AUTH ---
+        function checkAuth() {
+            const loginScreen = document.getElementById('login-screen');
+            const dashboardScreen = document.getElementById('dashboard-screen');
+            
+            if (currentUser) {
+                loginScreen.classList.add('hidden-section');
+                dashboardScreen.classList.remove('hidden-section');
+                
+                document.getElementById('user-name-display').innerText = currentUser.username;
+                document.getElementById('user-avatar').innerText = currentUser.username.charAt(0).toUpperCase();
+                
+                initDashboard();
+            } else {
+                loginScreen.classList.remove('hidden-section');
+                dashboardScreen.classList.add('hidden-section');
+            }
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById('username').value;
+            const p = document.getElementById('password').value;
+            const user = db.users.find(usr => usr.username === u && usr.password === p);
+
+            if (user) {
+                currentUser = user;
+                localStorage.setItem('currentUser', JSON.stringify(user));
+                checkAuth();
+                showNotification('تم تسجيل الدخول بنجاح', 'success');
+            } else {
+                showNotification('خطأ في البيانات', 'error');
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('currentUser');
+            checkAuth();
+        }
+
+        // --- DASHBOARD ---
+        function initDashboard() {
+            renderOrders();
+            renderStats();
+            
+            const userBtn = document.getElementById('nav-users');
+            if (currentUser.role !== 'admin') userBtn.classList.add('hidden');
+            else userBtn.classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('bg-slate-800', 'text-white'));
+            document.getElementById('nav-orders').classList.add('bg-slate-800', 'text-white');
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden-section'));
+            document.querySelectorAll('.nav-btn').forEach(el => {
+                el.classList.remove('bg-slate-800', 'text-white');
+                el.classList.add('text-slate-300');
+            });
+
+            document.getElementById(`tab-${tabName}`).classList.remove('hidden-section');
+            document.getElementById(`nav-${tabName}`).classList.add('bg-slate-800', 'text-white');
+            document.getElementById(`nav-${tabName}`).classList.remove('text-slate-300');
+
+            document.getElementById('page-title').innerText = document.getElementById(`nav-${tabName}`).innerText.trim();
+            if(tabName === 'orders') document.getElementById('stats-overview').classList.remove('hidden');
+            else document.getElementById('stats-overview').classList.add('hidden');
+
+            if(tabName === 'marketers') renderMarketers();
+            if(tabName === 'designers') renderDesigners();
+            if(tabName === 'users') renderUsers();
+        }
+
+        function toggleMobileMenu() {
+            document.getElementById('sidebar-nav').classList.toggle('hidden');
+        }
+
+        // --- ORDERS LOGIC ---
+        function renderOrders() {
+            const tbody = document.getElementById('orders-table-body');
+            const search = document.getElementById('search-orders').value.toLowerCase();
+            const filterStatus = document.getElementById('filter-status').value;
+            const filterDate = document.getElementById('filter-date').value;
+            const emptyState = document.getElementById('empty-orders-state');
+            
+            tbody.innerHTML = '';
+
+            const now = new Date();
+            const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+            const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+
+            const filteredOrders = db.orders.filter(order => {
+                const matchesSearch = order.client.toLowerCase().includes(search) || order.phone.includes(search);
+                const matchesStatus = filterStatus === 'all' || order.status === filterStatus;
+                
+                let matchesDate = true;
+                const orderDate = new Date(order.dateCreated);
+                if(filterDate === 'today') matchesDate = orderDate.toDateString() === new Date().toDateString();
+                if(filterDate === 'week') matchesDate = orderDate >= startOfWeek;
+                if(filterDate === 'month') matchesDate = orderDate >= startOfMonth;
+
+                return matchesSearch && matchesStatus && matchesDate;
+            }).sort((a, b) => b.id - a.id);
+
+            if (filteredOrders.length === 0) emptyState.classList.remove('hidden');
+            else emptyState.classList.add('hidden');
+
+            filteredOrders.forEach(order => {
+                const marketer = db.staff.find(s => s.id == order.marketerId)?.name || '<span class="text-slate-400">مباشر</span>';
+                const designer = db.staff.find(s => s.id == order.designerId)?.name || '<span class="text-slate-400">---</span>';
+                
+                let statusBadge = '';
+                if(order.status === 'pending') statusBadge = '<span class="status-badge bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">⏳ قيد التنفيذ</span>';
+                else if(order.status === 'done') statusBadge = '<span class="status-badge bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">✅ مكتمل</span>';
+                else if(order.status === 'rejected') statusBadge = '<span class="status-badge bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">❌ مرفوض</span>';
+                else statusBadge = '<span class="status-badge bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">👀 مراجعة</span>';
+
+                const depositBadge = order.deposit 
+                    ? '<span class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 flex items-center justify-center mx-auto"><i class="fas fa-check"></i></span>' 
+                    : '<span class="w-8 h-8 rounded-full bg-slate-100 text-slate-300 dark:bg-slate-700 dark:text-slate-500 flex items-center justify-center mx-auto"><i class="fas fa-times"></i></span>';
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 dark:hover:bg-slate-800 transition border-b border-slate-50 dark:border-slate-800 last:border-0";
+                tr.innerHTML = `
+                    <td class="p-5" data-label="العميل">
+                        <div>
+                            <div class="font-bold text-slate-800 dark:text-slate-100">${order.client}</div>
+                            <div class="text-xs text-slate-400 font-mono mt-1">${order.phone}</div>
+                        </div>
+                    </td>
+                    <td class="p-5" data-label="الخدمة"><span class="bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 px-2 py-1 rounded text-xs font-bold">${order.service}</span></td>
+                    <td class="p-5" data-label="المالية">
+                        <div>
+                            <div class="font-bold text-slate-800 dark:text-slate-200">${parseFloat(order.price).toLocaleString()} ج.م</div>
+                            ${(order.price - order.paid) > 0 ? `<div class="text-xs text-red-500 font-bold mt-1">مديونية: ${(order.price - order.paid)}</div>` : '<div class="text-xs text-emerald-500 font-bold mt-1">خالص</div>'}
+                        </div>
+                    </td>
+                    <td class="p-5 text-center" data-label="العربون">${depositBadge}</td>
+                    <td class="p-5" data-label="الفريق">
+                        <div class="text-xs text-slate-500 dark:text-slate-400 mb-1"><i class="fas fa-bullhorn w-4"></i> ${marketer}</div>
+                        <div class="text-xs text-slate-500 dark:text-slate-400"><i class="fas fa-paint-brush w-4"></i> ${designer}</div>
+                    </td>
+                    <td class="p-5" data-label="الحالة">${statusBadge}</td>
+                    <td class="p-5 text-center">
+                        <div class="flex justify-center gap-2">
+                            <button onclick="editOrder(${order.id})" class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 hover:bg-blue-100 transition"><i class="fas fa-edit"></i></button>
+                            ${currentUser.role === 'admin' ? `<button onclick="deleteOrder(${order.id})" class="w-8 h-8 rounded-lg bg-red-50 text-red-500 dark:bg-red-900/30 dark:text-red-400 hover:bg-red-100 transition"><i class="fas fa-trash"></i></button>` : ''}
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateStatusSelect(val) {
+            document.getElementById('order-status').value = val;
+        }
+
+        function saveOrder(e) {
+            e.preventDefault();
+            const id = document.getElementById('order-id').value;
+            const statusRadio = document.querySelector('input[name="status-radio"]:checked').value;
+            
+            const newOrder = {
+                client: document.getElementById('client-name').value,
+                phone: document.getElementById('client-phone').value,
+                service: document.getElementById('service-type').value,
+                price: parseFloat(document.getElementById('order-price').value) || 0,
+                paid: parseFloat(document.getElementById('amount-paid').value) || 0,
+                deposit: document.getElementById('deposit-paid').checked,
+                marketerId: document.getElementById('order-marketer').value,
+                designerId: document.getElementById('order-designer').value,
+                status: statusRadio
+            };
+
+            let dateCreated = Date.now();
+            let dateAssigned = null;
+
+            if (id) {
+                const index = db.orders.findIndex(o => o.id == id);
+                const existing = db.orders[index];
+                dateCreated = existing.dateCreated;
+                dateAssigned = existing.dateAssigned;
+                if ((!existing.designerId && newOrder.designerId) || (existing.designerId && newOrder.designerId && existing.designerId != newOrder.designerId)) {
+                    dateAssigned = Date.now();
+                }
+                db.orders[index] = { ...existing, ...newOrder, dateAssigned };
+            } else {
+                if (newOrder.designerId) dateAssigned = Date.now();
+                db.orders.push({ id: Date.now(), ...newOrder, dateCreated, dateAssigned });
+            }
+
+            saveDB();
+            closeModal('order-modal');
+            renderOrders();
+            showNotification('تم الحفظ', 'success');
+        }
+
+        function editOrder(id) {
+            const order = db.orders.find(o => o.id == id);
+            if (!order) return;
+
+            populateStaffSelects();
+            document.getElementById('order-id').value = order.id;
+            document.getElementById('client-name').value = order.client;
+            document.getElementById('client-phone').value = order.phone;
+            document.getElementById('service-type').value = order.service;
+            document.getElementById('order-price').value = order.price;
+            document.getElementById('amount-paid').value = order.paid;
+            document.getElementById('deposit-paid').checked = order.deposit;
+            document.getElementById('order-marketer').value = order.marketerId || "";
+            document.getElementById('order-designer').value = order.designerId || "";
+            
+            const radios = document.getElementsByName('status-radio');
+            radios.forEach(r => { if(r.value === order.status) r.checked = true; });
+            document.getElementById('order-status').value = order.status;
+
+            calculateRemaining();
+            document.getElementById('modal-title').innerText = "تعديل الطلب";
+            document.getElementById('order-modal').classList.remove('hidden');
+        }
+
+        function deleteOrder(id) {
+            if(confirm('حذف هذا الطلب؟')) {
+                db.orders = db.orders.filter(o => o.id != id);
+                saveDB(); renderOrders();
+                showNotification('تم الحذف', 'warning');
+            }
+        }
+
+        function calculateRemaining() {
+            const price = parseFloat(document.getElementById('order-price').value) || 0;
+            const paid = parseFloat(document.getElementById('amount-paid').value) || 0;
+            const rem = price - paid;
+            const el = document.getElementById('amount-remaining');
+            el.value = rem.toFixed(2);
+            if(rem <= 0) { el.classList.remove('text-red-600', 'bg-red-50'); el.classList.add('text-emerald-600', 'bg-emerald-50'); }
+            else { el.classList.add('text-red-600', 'bg-red-50'); el.classList.remove('text-emerald-600', 'bg-emerald-50'); }
+        }
+
+        // --- DESIGNERS ---
+        function renderDesigners() {
+            const container = document.getElementById('designers-grid');
+            container.innerHTML = '';
+            
+            db.staff.filter(s => s.type === 'designer').forEach(d => {
+                const activeTasks = db.orders.filter(o => o.designerId == d.id && (o.status === 'pending' || o.status === 'review'));
+                const completedTasks = db.orders.filter(o => o.designerId == d.id && o.status === 'done');
+
+                let tasksHtml = '';
+                if(activeTasks.length > 0) {
+                    tasksHtml = '<div class="space-y-4 mt-4">';
+                    activeTasks.forEach(t => {
+                        const now = Date.now();
+                        const timeElapsed = now - t.dateAssigned;
+                        const hoursElapsed = timeElapsed / (1000 * 60 * 60);
+                        const percent = Math.min((hoursElapsed / 24) * 100, 100);
+                        let colorClass = 'bg-emerald-500';
+                        if(percent > 50) colorClass = 'bg-yellow-500';
+                        if(percent > 90) colorClass = 'bg-red-500';
+
+                        tasksHtml += `
+                            <div class="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="font-bold text-sm text-slate-700 dark:text-slate-200">${t.client}</span>
+                                    <span class="text-xs bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 px-2 py-0.5 rounded">${t.service}</span>
+                                </div>
+                                <div class="progress-bar-container bg-slate-200 dark:bg-slate-700">
+                                    <div class="progress-bar-fill ${colorClass}" style="width: ${percent}%"></div>
+                                </div>
+                                <div class="flex justify-between mt-1 text-[10px] font-bold text-slate-400">
+                                    <span>مرّ ${Math.floor(hoursElapsed)}س</span>
+                                    <span>24س</span>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    tasksHtml += '</div>';
+                } else {
+                    tasksHtml = `<div class="text-center py-4 text-slate-400 text-sm">لا مهام نشطة</div>`;
+                }
+
+                const card = document.createElement('div');
+                card.className = "bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 card-hover";
+                card.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div class="flex gap-4">
+                            <div class="w-12 h-12 rounded-2xl bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400 flex items-center justify-center text-xl font-bold">${d.name.charAt(0)}</div>
+                            <div>
+                                <h3 class="font-bold text-lg text-slate-800 dark:text-white">${d.name}</h3>
+                                <p class="text-purple-600 dark:text-purple-400 text-sm">${d.specialty}</p>
+                            </div>
+                        </div>
+                        ${currentUser.role === 'admin' ? `<button onclick="deleteStaff(${d.id})" class="text-slate-300 hover:text-red-500"><i class="fas fa-trash"></i></button>` : ''}
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 mt-4">
+                        <div class="bg-slate-50 dark:bg-slate-700 p-2 rounded-xl text-center"><div class="text-lg font-bold text-purple-600 dark:text-purple-400">${activeTasks.length}</div><div class="text-xs text-slate-400">جاري</div></div>
+                        <div class="bg-slate-50 dark:bg-slate-700 p-2 rounded-xl text-center"><div class="text-lg font-bold text-emerald-600 dark:text-emerald-400">${completedTasks.length}</div><div class="text-xs text-slate-400">منجز</div></div>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700">${tasksHtml}</div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // --- MARKETERS ---
+        function renderMarketers() {
+            const container = document.getElementById('marketers-grid');
+            container.innerHTML = '';
+            
+            db.staff.filter(s => s.type === 'marketer').forEach(m => {
+                const mOrders = db.orders.filter(o => o.marketerId == m.id && o.status !== 'rejected');
+                const totalSales = mOrders.reduce((sum, o) => sum + parseFloat(o.price), 0);
+                const commissionVal = (totalSales * (parseFloat(m.commission) || 0)) / 100;
+
+                const card = document.createElement('div');
+                card.className = "bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 card-hover relative overflow-hidden";
+                card.innerHTML = `
+                    <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-green-600"></div>
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <h3 class="font-bold text-xl text-slate-800 dark:text-white">${m.name}</h3>
+                            <p class="text-sm text-slate-500">${m.phone}</p>
+                        </div>
+                        <div class="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-bold px-3 py-1 rounded-lg text-sm">%${m.commission}</div>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex justify-between p-3 bg-slate-50 dark:bg-slate-700 rounded-xl">
+                            <span class="text-slate-500 dark:text-slate-400 text-sm">الطلبات</span>
+                            <span class="font-bold text-slate-800 dark:text-white">${mOrders.length}</span>
+                        </div>
+                        <div class="flex justify-between p-3 bg-slate-50 dark:bg-slate-700 rounded-xl">
+                            <span class="text-slate-500 dark:text-slate-400 text-sm">المبيعات</span>
+                            <span class="font-bold text-slate-800 dark:text-white">${totalSales.toLocaleString()} ج.م</span>
+                        </div>
+                        <div class="flex justify-between items-center p-4 bg-emerald-600 text-white rounded-xl shadow-lg mt-2">
+                            <span class="font-bold text-emerald-100">العمولة</span>
+                            <span class="font-bold text-xl">${commissionVal.toLocaleString()} ج.م</span>
+                        </div>
+                    </div>
+                     ${currentUser.role === 'admin' ? `<button onclick="deleteStaff(${m.id})" class="absolute top-4 left-4 text-slate-300 hover:text-red-500"><i class="fas fa-trash"></i></button>` : ''}
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // --- BACKUP & RESTORE ---
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db));
+            const dlNode = document.createElement('a');
+            dlNode.setAttribute("href", dataStr);
+            dlNode.setAttribute("download", "agency_backup_" + new Date().toISOString().slice(0,10) + ".json");
+            document.body.appendChild(dlNode); dlNode.click(); dlNode.remove();
+            showNotification('تم تحميل النسخة', 'success');
+        }
+
+        function importData(input) {
+            const file = input.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const json = JSON.parse(e.target.result);
+                    if(json.users && json.orders) {
+                        if(confirm('استبدال البيانات؟')) {
+                            db = json; saveDB(); location.reload();
+                        }
+                    } else showNotification('ملف غير صالح', 'error');
+                } catch(err) { showNotification('خطأ في الملف', 'error'); }
+            };
+            reader.readAsText(file);
+        }
+
+        // --- UTILS ---
+        function saveDB() {
+            localStorage.setItem('agencyDB', JSON.stringify(db));
+            renderStats();
+        }
+
+        function saveStaff(e) {
+            e.preventDefault();
+            const type = document.getElementById('staff-role').value;
+            const name = document.getElementById('staff-name').value;
+            const phone = document.getElementById('staff-phone').value;
+            let extraData = {};
+            if(type === 'marketer') extraData.commission = document.getElementById('staff-commission').value;
+            else {
+                extraData.specialty = document.getElementById('staff-specialty').value;
+                extraData.wallet = document.getElementById('staff-wallet').value;
+            }
+            db.staff.push({ id: Date.now(), name, type, phone, ...extraData });
+            saveDB(); closeModal('staff-modal');
+            if(type === 'marketer') renderMarketers(); else renderDesigners();
+            showNotification('تمت الإضافة', 'success');
+        }
+
+        function deleteStaff(id) {
+            if(confirm('حذف الموظف؟')) {
+                db.staff = db.staff.filter(s => s.id != id);
+                saveDB();
+                if(!document.getElementById('tab-marketers').classList.contains('hidden-section')) renderMarketers();
+                if(!document.getElementById('tab-designers').classList.contains('hidden-section')) renderDesigners();
+            }
+        }
+        
+        function saveUser(e) {
+            e.preventDefault();
+            const u = document.getElementById('new-username').value;
+            const p = document.getElementById('new-password').value;
+            const r = document.getElementById('new-role').value;
+            if(db.users.find(usr => usr.username === u)) { showNotification('المستخدم موجود', 'error'); return; }
+            db.users.push({ id: Date.now(), username: u, password: p, role: r });
+            saveDB(); closeModal('user-modal'); renderUsers();
+            showNotification('تمت الإضافة', 'success');
+        }
+
+        function renderUsers() {
+            const tbody = document.getElementById('users-table-body');
+            tbody.innerHTML = '';
+            db.users.forEach(u => {
+                tbody.innerHTML += `
+                    <tr class="border-b border-slate-50 dark:border-slate-700 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-700">
+                        <td class="p-4 font-bold text-slate-700 dark:text-slate-200">${u.username}</td>
+                        <td class="p-4"><span class="px-3 py-1 rounded-full ${u.role === 'admin' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400' : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400'} text-xs font-bold">${u.role === 'admin' ? 'مدير كامل' : 'مساعد'}</span></td>
+                        <td class="p-4">
+                            ${u.username !== 'admin' ? `<button onclick="deleteUser(${u.id})" class="text-red-400 hover:text-red-600"><i class="fas fa-trash"></i></button>` : '<span class="text-slate-300"><i class="fas fa-lock"></i></span>'}
+                        </td>
+                    </tr>`;
+            });
+        }
+        
+        function deleteUser(id) {
+            if(confirm('حذف المستخدم؟')) {
+                db.users = db.users.filter(u => u.id != id);
+                saveDB(); renderUsers();
+            }
+        }
+
+        function renderStats() {
+            document.getElementById('stat-total-orders').innerText = db.orders.length;
+            const revenue = db.orders.filter(o => o.status !== 'rejected').reduce((sum, o) => sum + (parseFloat(o.paid) || 0), 0);
+            document.getElementById('stat-revenue').innerText = revenue.toLocaleString() + ' ج.م';
+            
+            // Debt Logic
+            const debt = db.orders.filter(o => o.status !== 'rejected').reduce((sum, o) => sum + (parseFloat(o.price) - parseFloat(o.paid)), 0);
+            document.getElementById('stat-debt').innerText = debt.toLocaleString() + ' ج.م';
+            
+            let lateCount = 0;
+            const now = Date.now();
+            db.orders.forEach(o => { if(o.status === 'pending' && o.designerId && (now - o.dateAssigned > 86400000)) lateCount++; });
+            document.getElementById('stat-late-tasks').innerText = lateCount;
+        }
+
+        function populateStaffSelects() {
+            const mSelect = document.getElementById('order-marketer');
+            const dSelect = document.getElementById('order-designer');
+            mSelect.innerHTML = '<option value="">-- مباشر --</option>';
+            dSelect.innerHTML = '<option value="">-- اختر مصمم --</option>';
+            db.staff.filter(s => s.type === 'marketer').forEach(m => mSelect.innerHTML += `<option value="${m.id}">${m.name}</option>`);
+            db.staff.filter(s => s.type === 'designer').forEach(d => dSelect.innerHTML += `<option value="${d.id}">${d.name} (${d.specialty})</option>`);
+        }
+
+        function openModal(modalId, type = null) {
+            if(modalId === 'staff-modal') {
+                document.getElementById('staff-role').value = type;
+                document.getElementById('marketer-fields').classList.add('hidden');
+                document.getElementById('designer-fields').classList.add('hidden');
+                if(type === 'marketer') {
+                    document.getElementById('staff-modal-title').innerText = "إضافة مسوق";
+                    document.getElementById('marketer-fields').classList.remove('hidden');
+                } else {
+                    document.getElementById('staff-modal-title').innerText = "إضافة مصمم";
+                    document.getElementById('designer-fields').classList.remove('hidden');
+                }
+            } else if (modalId === 'order-modal') {
+                document.getElementById('order-form').reset();
+                document.getElementById('order-id').value = '';
+                document.getElementById('modal-title').innerText = "طلب جديد";
+                document.getElementById('amount-remaining').value = '0';
+                document.getElementById('amount-remaining').classList.remove('bg-emerald-50', 'text-emerald-600');
+                populateStaffSelects();
+                document.querySelector('input[name="status-radio"][value="pending"]').checked = true;
+                document.getElementById('order-status').value = 'pending';
+            }
+            const el = document.getElementById(modalId);
+            el.classList.remove('hidden');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        function showNotification(msg, type = 'success') {
+            const area = document.getElementById('notification-area');
+            const div = document.createElement('div');
+            const colorClass = type === 'success' ? 'bg-emerald-600' : (type === 'error' ? 'bg-red-600' : 'bg-orange-500');
+            div.className = `${colorClass} text-white px-6 py-4 rounded-xl shadow-xl fade-in flex items-center gap-3 min-w-[320px] transform transition-all duration-300`;
+            div.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} text-xl"></i><span class="font-bold">${msg}</span>`;
+            area.appendChild(div);
+            setTimeout(() => { div.style.opacity = '0'; div.style.transform = 'translateX(-20px)'; setTimeout(() => div.remove(), 300); }, 3000);
+        }
+
+        checkAuth();
+    </script>
+</body>
+</html>
