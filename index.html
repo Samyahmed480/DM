@@ -31,6 +31,7 @@
         
         /* Custom Animations */
         .fade-in { animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .hidden-section { display: none !important; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
         .card-hover { transition: all 0.3s ease; }
@@ -154,6 +155,10 @@
                     <span class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition"><i class="fas fa-clipboard-list"></i></span>
                     الطلبات والعملاء
                 </button>
+                <button onclick="switchTab('collections')" id="nav-collections" class="nav-btn w-full text-right px-4 py-3.5 rounded-xl hover:bg-slate-800 transition flex items-center gap-3 text-slate-300 font-medium group">
+                    <span class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center group-hover:bg-teal-600 group-hover:text-white transition"><i class="fas fa-money-bill-wave"></i></span>
+                    التحصيلات والمالية
+                </button>
                 <button onclick="switchTab('marketers')" id="nav-marketers" class="nav-btn w-full text-right px-4 py-3.5 rounded-xl hover:bg-slate-800 transition flex items-center gap-3 text-slate-300 font-medium group">
                     <span class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition"><i class="fas fa-bullhorn"></i></span>
                     المسوقين والنسب
@@ -170,7 +175,7 @@
                 </button>
                 <button onclick="switchTab('settings')" id="nav-settings" class="nav-btn w-full text-right px-4 py-3.5 rounded-xl hover:bg-slate-800 transition flex items-center gap-3 text-slate-300 font-medium group">
                     <span class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center group-hover:bg-orange-500 group-hover:text-white transition"><i class="fas fa-database"></i></span>
-                    نسخ احتياطي
+                    الإعدادات والنظام
                 </button>
             </nav>
 
@@ -193,11 +198,29 @@
                     <h2 class="text-2xl md:text-3xl font-extrabold text-slate-800 dark:text-white tracking-tight" id="page-title">لوحة التحكم</h2>
                     <p class="text-slate-500 dark:text-slate-400 text-sm mt-1" id="current-date"></p>
                 </div>
-                <div class="flex items-center gap-3 bg-white dark:bg-slate-800 p-2 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
-                    <div class="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-lg" id="user-avatar">A</div>
-                    <div class="hidden md:block px-2">
-                        <div class="text-sm font-bold text-slate-800 dark:text-white" id="user-name-display">Admin</div>
-                        <div class="text-xs text-slate-500 dark:text-slate-400">مدير النظام</div>
+                
+                <div class="flex items-center gap-4">
+                    <!-- Notifications Bell -->
+                    <div class="relative" id="notification-bell-container">
+                        <button onclick="toggleNotificationMenu()" class="relative w-14 h-14 rounded-2xl bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition shadow-sm flex items-center justify-center group">
+                            <i class="fas fa-bell text-xl group-hover:text-indigo-500 transition"></i>
+                            <span id="notification-badge" class="absolute top-3 right-3 w-3 h-3 bg-red-500 rounded-full border-2 border-white dark:border-slate-800 hidden animate-pulse"></span>
+                        </button>
+                        
+                        <div id="notification-menu" class="absolute left-0 mt-3 w-80 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 hidden z-50 overflow-hidden origin-top-left">
+                            <div class="p-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
+                                <h3 class="font-bold text-slate-800 dark:text-white text-sm">التنبيهات (تأخير التسليم)</h3>
+                            </div>
+                            <div id="notification-list" class="max-h-64 overflow-y-auto p-2 space-y-2"></div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-3 bg-white dark:bg-slate-800 p-2 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
+                        <div class="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-lg" id="user-avatar">A</div>
+                        <div class="hidden md:block px-2">
+                            <div class="text-sm font-bold text-slate-800 dark:text-white" id="user-name-display">Admin</div>
+                            <div class="text-xs text-slate-500 dark:text-slate-400">مدير النظام</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -242,6 +265,30 @@
                             <h3 class="text-2xl font-black text-red-600 dark:text-red-400" id="stat-late-tasks">0</h3>
                         </div>
                         <div class="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 flex items-center justify-center"><i class="fas fa-alarm-clock text-lg"></i></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CHARTS SECTION (New) -->
+            <div id="charts-area" class="mb-8 fade-in space-y-6">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+                        <h3 class="font-bold text-slate-700 dark:text-slate-300 mb-4 text-sm">توزيع حالات الطلبات</h3>
+                        <div class="h-64 flex items-center justify-center relative">
+                            <canvas id="statusChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+                        <h3 class="font-bold text-slate-700 dark:text-slate-300 mb-4 text-sm">أعلى المسوقين مبيعاً</h3>
+                        <div class="h-64 flex items-center justify-center relative">
+                            <canvas id="marketerChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+                    <h3 class="font-bold text-slate-700 dark:text-slate-300 mb-4 text-sm">الإيرادات اليومية (آخر 7 أيام)</h3>
+                    <div class="h-64 w-full relative">
+                        <canvas id="revenueChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -318,19 +365,51 @@
                 </div>
             </div>
 
-            <!-- TAB 2: MARKETERS -->
+            <!-- TAB 2: COLLECTIONS (New) -->
+            <div id="tab-collections" class="tab-content hidden-section fade-in">
+                <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                    <div class="p-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
+                        <h3 class="font-bold text-lg text-slate-800 dark:text-white">سجل التحصيلات والديون</h3>
+                        <div class="text-sm text-slate-500">يعرض هذا الجدول الحالة المالية وحالة الطلب فقط</div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-right">
+                            <thead class="bg-teal-50 dark:bg-teal-900/20 text-teal-800 dark:text-teal-400 text-xs uppercase font-bold tracking-wider">
+                                <tr>
+                                    <th class="p-5">رقم المرجع</th>
+                                    <th class="p-5">العميل</th>
+                                    <th class="p-5">الخدمة</th>
+                                    <th class="p-5">إجمالي السعر</th>
+                                    <th class="p-5 text-emerald-600">المدفوع</th>
+                                    <th class="p-5 text-red-500">المتبقي (ديون)</th>
+                                    <th class="p-5">حالة الطلب</th>
+                                </tr>
+                            </thead>
+                            <tbody id="collections-table-body" class="text-sm divide-y divide-slate-100 dark:divide-slate-700 font-medium text-slate-700 dark:text-slate-200"></tbody>
+                            <tfoot id="collections-table-footer" class="bg-slate-50 dark:bg-slate-800 font-bold text-slate-800 dark:text-white border-t-2 border-slate-200 dark:border-slate-700"></tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: MARKETERS -->
             <div id="tab-marketers" class="tab-content hidden-section fade-in">
                 <div class="flex justify-between items-center mb-6">
-                    <button onclick="openModal('staff-modal', 'marketer')" class="bg-emerald-600 text-white px-6 py-2.5 rounded-xl hover:bg-emerald-700 shadow-lg shadow-emerald-500/30 transition font-bold">
-                        <i class="fas fa-plus"></i> إضافة مسوق
-                    </button>
+                    <div class="flex gap-3">
+                        <button onclick="openModal('staff-modal', 'marketer')" class="bg-emerald-600 text-white px-6 py-2.5 rounded-xl hover:bg-emerald-700 shadow-lg shadow-emerald-500/30 transition font-bold">
+                            <i class="fas fa-plus"></i> إضافة مسوق
+                        </button>
+                        <button onclick="openReportModal()" class="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 px-6 py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition font-bold">
+                            <i class="fas fa-chart-pie text-emerald-500"></i> تقرير العمولات
+                        </button>
+                    </div>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="marketers-grid">
                     <!-- JS Generated -->
                 </div>
             </div>
 
-            <!-- TAB 3: DESIGNERS -->
+            <!-- TAB 4: DESIGNERS -->
             <div id="tab-designers" class="tab-content hidden-section fade-in">
                 <div class="flex justify-between items-center mb-6">
                     <button onclick="openModal('staff-modal', 'designer')" class="bg-purple-600 text-white px-6 py-2.5 rounded-xl hover:bg-purple-700 shadow-lg shadow-purple-500/30 transition font-bold">
@@ -342,7 +421,7 @@
                 </div>
             </div>
 
-            <!-- TAB 4: USERS -->
+            <!-- TAB 5: USERS -->
             <div id="tab-users" class="tab-content hidden-section fade-in">
                 <div class="flex justify-between items-center mb-6">
                     <button onclick="openModal('user-modal')" class="bg-slate-800 dark:bg-slate-700 text-white px-6 py-2.5 rounded-xl hover:bg-slate-900 shadow-lg transition font-bold">
@@ -363,9 +442,23 @@
                 </div>
             </div>
 
-            <!-- TAB 5: SETTINGS -->
+            <!-- TAB 6: SETTINGS -->
             <div id="tab-settings" class="tab-content hidden-section fade-in">
                 <div class="max-w-2xl mx-auto space-y-6">
+                    
+                    <!-- Change Password -->
+                    <div class="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+                        <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-4 border-b dark:border-slate-700 pb-2"><i class="fas fa-key text-indigo-500"></i> تغيير كلمة المرور</h3>
+                        <form onsubmit="changePassword(event)" class="flex gap-4 items-end">
+                            <div class="flex-1">
+                                <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">كلمة المرور الجديدة</label>
+                                <input type="password" id="new-system-password" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 dark:text-white" required placeholder="أدخل كلمة المرور الجديدة">
+                            </div>
+                            <button type="submit" class="bg-indigo-600 text-white px-6 py-3 rounded-xl hover:bg-indigo-700 font-bold transition">تحديث</button>
+                        </form>
+                    </div>
+
+                    <!-- Backup -->
                     <div class="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
                         <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-4 border-b dark:border-slate-700 pb-2"><i class="fas fa-database text-orange-500"></i> النسخ الاحتياطي</h3>
                         <p class="text-slate-500 dark:text-slate-400 mb-6 text-sm">
@@ -383,6 +476,16 @@
                             </label>
                         </div>
                     </div>
+
+                    <!-- Danger Zone -->
+                    <div class="bg-red-50 dark:bg-red-900/10 p-8 rounded-2xl shadow-sm border border-red-200 dark:border-red-900/30">
+                        <h3 class="text-xl font-bold text-red-600 dark:text-red-400 mb-4 border-b border-red-200 dark:border-red-800 pb-2"><i class="fas fa-exclamation-triangle"></i> منطقة الخطر</h3>
+                        <p class="text-slate-600 dark:text-slate-400 mb-6 text-sm">
+                            تصفير النظام سيقوم بحذف <strong>جميع الطلبات والمدفوعات والتقارير</strong> لبدء موسم جديد. لن يتم حذف حسابات الموظفين أو المستخدمين.
+                        </p>
+                        <button onclick="resetSystem()" class="w-full bg-red-600 text-white py-4 rounded-xl hover:bg-red-700 font-bold shadow-lg shadow-red-500/30 transition">تصفير النظام (بدء موسم جديد)</button>
+                    </div>
+
                 </div>
             </div>
 
@@ -414,17 +517,20 @@
                     <div>
                         <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">نوع الخدمة</label>
                         <select id="service-type" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 dark:text-white transition">
-                            <option value="بوستر">🎨 بوستر (Social Media)</option>
+                            <option value="سوشيال ميديا">📱 سوشيال ميديا (Social Media)</option>
                             <option value="غلاف">🖼️ غلاف (Cover)</option>
-                            <option value="لوجو">✒️ شعار (Logo)</option>
-                            <option value="فيديو">🎬 فيديو (Reels)</option>
-                            <option value="هوية">💼 هوية بصرية</option>
-                            <option value="آخر">✨ أخرى</option>
+                            <option value="بوستر مراجعة">📢 بوستر مراجعة</option>
+                            <option value="كروت شخصيه">📇 كروت شخصية</option>
+                            <option value="صور مصغرة">▶️ صور مصغرة (Thumbnails)</option>
+                            <option value="لوجو">✒️ لوجو (Logo)</option>
+                            <option value="بانر">🚩 بانر (Banner)</option>
+                            <option value="شهادة">📜 شهادة (Certificate)</option>
+                            <option value="منيو">🍽️ منيو (Menu)</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">إجمالي السعر</label>
-                        <input type="number" id="order-price" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 dark:text-white font-bold" placeholder="0.00" oninput="calculateRemaining()">
+                        <input type="number" id="order-price" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 dark:text-white font-bold" placeholder="0.00" oninput="calculateRemaining(); calculateOrderCommission()">
                     </div>
                 </div>
 
@@ -448,9 +554,10 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
                     <div>
                         <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">المسوق</label>
-                        <select id="order-marketer" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 dark:text-white transition">
+                        <select id="order-marketer" onchange="calculateOrderCommission()" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 dark:text-white transition">
                             <option value="">-- مباشر --</option>
                         </select>
+                        <div id="order-commission-preview" class="text-xs font-bold text-emerald-600 mt-2 hidden"></div>
                     </div>
                     <div>
                         <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">المصمم</label>
@@ -496,6 +603,7 @@
         <div class="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-md p-8 shadow-2xl fade-in border border-slate-200 dark:border-slate-700">
             <h3 class="text-xl font-bold mb-6 text-slate-800 dark:text-white" id="staff-modal-title">إضافة موظف</h3>
             <form onsubmit="saveStaff(event)">
+                <input type="hidden" id="staff-id">
                 <input type="hidden" id="staff-role">
                 <div class="mb-4">
                     <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">الاسم</label>
@@ -556,16 +664,113 @@
         </div>
     </div>
 
+    <!-- PAYOUT MODAL -->
+    <div id="payout-modal" class="fixed inset-0 bg-slate-900/80 hidden z-[60] flex items-center justify-center backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-md p-8 shadow-2xl border border-slate-200 dark:border-slate-700 fade-in">
+            <h3 class="text-xl font-bold mb-6 text-slate-800 dark:text-white">تسجيل دفعة مالية</h3>
+            <form onsubmit="savePayout(event)">
+                <input type="hidden" id="payout-staff-id">
+                <div class="mb-4">
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">الموظف</label>
+                    <input type="text" id="payout-staff-name" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 dark:text-slate-400" readonly>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">المبلغ</label>
+                    <input type="number" id="payout-amount" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 dark:text-white font-bold" required>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">تاريخ الدفع</label>
+                    <input type="date" id="payout-date" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 dark:text-white" required>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">ملاحظات</label>
+                    <textarea id="payout-notes" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 dark:text-white" rows="2" placeholder="أي تفاصيل إضافية..."></textarea>
+                </div>
+                <div class="flex gap-3">
+                    <button type="submit" class="flex-1 bg-emerald-600 text-white py-3 rounded-xl hover:bg-emerald-700 font-bold">تسجيل</button>
+                    <button type="button" onclick="closeModal('payout-modal')" class="px-6 py-3 border rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 font-bold text-slate-600 dark:text-slate-400">إلغاء</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- REPORT MODAL -->
+    <div id="report-modal" class="fixed inset-0 bg-slate-900/80 hidden z-50 flex items-center justify-center backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-4xl p-8 shadow-2xl fade-in border border-slate-200 dark:border-slate-700 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">
+                <div>
+                    <h3 class="text-2xl font-bold text-slate-800 dark:text-white">تقرير العمولات الشهري</h3>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">تحليل مالي لأداء المسوقين</p>
+                </div>
+                <button onclick="closeModal('report-modal')" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-red-500 transition flex items-center justify-center"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <div class="mb-6 flex items-center gap-4 bg-slate-50 dark:bg-slate-800 p-4 rounded-xl">
+                <label class="font-bold text-slate-700 dark:text-slate-300">اختر الشهر:</label>
+                <input type="month" id="report-month" onchange="renderReportTable()" class="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-2 text-slate-700 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none">
+            </div>
+
+            <h4 class="font-bold text-slate-700 dark:text-slate-300 mb-3 border-r-4 border-emerald-500 pr-3">المسوقين (العمولات)</h4>
+            <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+                <table class="w-full text-right">
+                    <thead class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs uppercase font-bold">
+                        <tr>
+                            <th class="p-4">المسوق</th>
+                            <th class="p-4">إجمالي المبيعات</th>
+                            <th class="p-4 text-blue-600 dark:text-blue-400">محصلة (من المدفوع)</th>
+                            <th class="p-4 text-emerald-600 dark:text-emerald-400">تم صرفه</th>
+                            <th class="p-4 text-slate-500">ملاحظات الدفع</th>
+                            <th class="p-4 text-center">تسجيل دفع</th>
+                        </tr>
+                    </thead>
+                    <tbody id="report-table-body" class="divide-y divide-slate-100 dark:divide-slate-700 text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900"></tbody>
+                    <tfoot class="bg-slate-50 dark:bg-slate-800 font-bold text-slate-800 dark:text-white border-t-2 border-slate-200 dark:border-slate-700">
+                        <tr id="report-table-footer"></tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <h4 class="font-bold text-slate-700 dark:text-slate-300 mb-3 mt-8 border-r-4 border-purple-500 pr-3">المصممين (المدفوعات)</h4>
+            <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+                <table class="w-full text-right">
+                    <thead class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs uppercase font-bold">
+                        <tr>
+                            <th class="p-4">المصمم</th>
+                            <th class="p-4">التخصص</th>
+                            <th class="p-4 text-emerald-600 dark:text-emerald-400">تم صرفه (هذا الشهر)</th>
+                            <th class="p-4 text-slate-500">ملاحظات الدفع</th>
+                            <th class="p-4 text-center">تسجيل دفع</th>
+                        </tr>
+                    </thead>
+                    <tbody id="report-designers-body" class="divide-y divide-slate-100 dark:divide-slate-700 text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900"></tbody>
+                </table>
+            </div>
+            
+            <div class="mt-6 flex justify-end">
+                <button onclick="window.print()" class="bg-slate-800 text-white px-6 py-2.5 rounded-xl hover:bg-slate-900 transition font-bold flex items-center gap-2">
+                    <i class="fas fa-print"></i> طباعة التقرير
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // --- DATA & CONFIG ---
         const defaultData = {
             users: [{ id: 1, username: 'admin', password: 'admin', role: 'admin' }],
             staff: [],
-            orders: []
+            orders: [],
+            payouts: []
         };
 
         let db = JSON.parse(localStorage.getItem('agencyDB')) || defaultData;
+        if(!db.payouts) db.payouts = []; // Ensure payouts exists for old data
         let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
+
+        // Chart Instances
+        let statusChartInstance = null;
+        let marketerChartInstance = null;
+        let revenueChartInstance = null;
 
         // Dark Mode Logic
         function toggleDarkMode() {
@@ -578,6 +783,7 @@
                 Chart.defaults.color = isDark ? '#94a3b8' : '#64748b';
                 Chart.defaults.borderColor = isDark ? '#334155' : '#e2e8f0';
             }
+            if(currentUser) renderCharts(); // Re-render charts to update colors
         }
         
         // Init Dark Mode
@@ -654,10 +860,17 @@
             document.getElementById(`nav-${tabName}`).classList.remove('text-slate-300');
 
             document.getElementById('page-title').innerText = document.getElementById(`nav-${tabName}`).innerText.trim();
-            if(tabName === 'orders') document.getElementById('stats-overview').classList.remove('hidden');
-            else document.getElementById('stats-overview').classList.add('hidden');
-
+            
+            if(tabName === 'orders') {
+                document.getElementById('stats-overview').classList.remove('hidden');
+                document.getElementById('charts-area').classList.remove('hidden');
+            } else {
+                document.getElementById('stats-overview').classList.add('hidden');
+                document.getElementById('charts-area').classList.add('hidden');
+            }
+            
             if(tabName === 'marketers') renderMarketers();
+            if(tabName === 'collections') renderCollections();
             if(tabName === 'designers') renderDesigners();
             if(tabName === 'users') renderUsers();
         }
@@ -735,6 +948,8 @@
                     <td class="p-5 text-center">
                         <div class="flex justify-center gap-2">
                             <button onclick="editOrder(${order.id})" class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 hover:bg-blue-100 transition"><i class="fas fa-edit"></i></button>
+                            <button onclick="printInvoice(${order.id})" class="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400 hover:bg-slate-200 transition" title="طباعة فاتورة"><i class="fas fa-print"></i></button>
+                            <button onclick="sendWhatsApp(${order.id})" class="w-8 h-8 rounded-lg bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400 hover:bg-green-100 transition" title="إرسال واتساب"><i class="fab fa-whatsapp"></i></button>
                             ${currentUser.role === 'admin' ? `<button onclick="deleteOrder(${order.id})" class="w-8 h-8 rounded-lg bg-red-50 text-red-500 dark:bg-red-900/30 dark:text-red-400 hover:bg-red-100 transition"><i class="fas fa-trash"></i></button>` : ''}
                         </div>
                     </td>
@@ -807,6 +1022,7 @@
             document.getElementById('order-status').value = order.status;
 
             calculateRemaining();
+            calculateOrderCommission();
             document.getElementById('modal-title').innerText = "تعديل الطلب";
             document.getElementById('order-modal').classList.remove('hidden');
         }
@@ -829,6 +1045,76 @@
             else { el.classList.add('text-red-600', 'bg-red-50'); el.classList.remove('text-emerald-600', 'bg-emerald-50'); }
         }
 
+        function calculateOrderCommission() {
+            const marketerId = document.getElementById('order-marketer').value;
+            const price = parseFloat(document.getElementById('order-price').value) || 0;
+            const displayEl = document.getElementById('order-commission-preview');
+            
+            if(!marketerId) {
+                displayEl.classList.add('hidden');
+                return;
+            }
+
+            const marketer = db.staff.find(s => s.id == marketerId);
+            if(marketer && marketer.commission) {
+                const paid = parseFloat(document.getElementById('amount-paid').value) || 0;
+                const totalComm = (price * parseFloat(marketer.commission)) / 100;
+                const currentComm = (paid * parseFloat(marketer.commission)) / 100;
+                displayEl.innerHTML = `<i class="fas fa-coins ml-1"></i> عمولة حالية (من العربون/المدفوع): ${currentComm.toLocaleString()} ج.م <span class="text-slate-400">| الكلية: ${totalComm.toLocaleString()}</span>`;
+                displayEl.classList.remove('hidden');
+            } else {
+                displayEl.classList.add('hidden');
+            }
+        }
+
+        // --- COLLECTIONS LOGIC ---
+        function renderCollections() {
+            const tbody = document.getElementById('collections-table-body');
+            const tfoot = document.getElementById('collections-table-footer');
+            tbody.innerHTML = '';
+            
+            let totalPrices = 0;
+            let totalPaid = 0;
+            let totalDebt = 0;
+
+            db.orders.forEach(order => {
+                const remaining = order.price - order.paid;
+                totalPrices += parseFloat(order.price);
+                totalPaid += parseFloat(order.paid);
+                totalDebt += remaining;
+
+                let statusText = '';
+                let statusColor = '';
+                if(order.status === 'pending') { statusText = 'قيد التنفيذ'; statusColor = 'text-yellow-600'; }
+                else if(order.status === 'done') { statusText = 'مكتمل'; statusColor = 'text-emerald-600'; }
+                else if(order.status === 'rejected') { statusText = 'مرفوض'; statusColor = 'text-red-600'; }
+                else { statusText = 'مراجعة'; statusColor = 'text-blue-600'; }
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 dark:hover:bg-slate-800 transition border-b border-slate-50 dark:border-slate-800 last:border-0";
+                tr.innerHTML = `
+                    <td class="p-5 font-mono text-slate-500">#${order.id}</td>
+                    <td class="p-5 font-bold text-slate-800 dark:text-slate-200">${order.client}</td>
+                    <td class="p-5"><span class="bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded text-xs">${order.service}</span></td>
+                    <td class="p-5 font-bold">${parseFloat(order.price).toLocaleString()} ج.م</td>
+                    <td class="p-5 text-emerald-600 font-bold">${parseFloat(order.paid).toLocaleString()} ج.م</td>
+                    <td class="p-5 font-bold ${remaining > 0 ? 'text-red-500' : 'text-slate-400'}">${remaining > 0 ? remaining.toLocaleString() + ' ج.م' : '-'}</td>
+                    <td class="p-5 font-bold ${statusColor}">${statusText}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            tfoot.innerHTML = `
+                <tr>
+                    <td colspan="3" class="p-5 text-left">الإجماليات</td>
+                    <td class="p-5">${totalPrices.toLocaleString()} ج.م</td>
+                    <td class="p-5 text-emerald-600">${totalPaid.toLocaleString()} ج.م</td>
+                    <td class="p-5 text-red-500">${totalDebt.toLocaleString()} ج.م</td>
+                    <td></td>
+                </tr>
+            `;
+        }
+
         // --- DESIGNERS ---
         function renderDesigners() {
             const container = document.getElementById('designers-grid');
@@ -843,7 +1129,7 @@
                     tasksHtml = '<div class="space-y-4 mt-4">';
                     activeTasks.forEach(t => {
                         const now = Date.now();
-                        const timeElapsed = now - t.dateAssigned;
+                        const timeElapsed = t.dateAssigned ? (now - t.dateAssigned) : 0;
                         const hoursElapsed = timeElapsed / (1000 * 60 * 60);
                         const percent = Math.min((hoursElapsed / 24) * 100, 100);
                         let colorClass = 'bg-emerald-500';
@@ -882,7 +1168,10 @@
                                 <p class="text-purple-600 dark:text-purple-400 text-sm">${d.specialty}</p>
                             </div>
                         </div>
-                        ${currentUser.role === 'admin' ? `<button onclick="deleteStaff(${d.id})" class="text-slate-300 hover:text-red-500"><i class="fas fa-trash"></i></button>` : ''}
+                        <div class="flex gap-2">
+                            <button onclick="editStaff(${d.id})" class="text-slate-300 hover:text-blue-500 transition"><i class="fas fa-edit"></i></button>
+                            ${currentUser.role === 'admin' ? `<button onclick="deleteStaff(${d.id})" class="text-slate-300 hover:text-red-500 transition"><i class="fas fa-trash"></i></button>` : ''}
+                        </div>
                     </div>
                     <div class="grid grid-cols-2 gap-3 mt-4">
                         <div class="bg-slate-50 dark:bg-slate-700 p-2 rounded-xl text-center"><div class="text-lg font-bold text-purple-600 dark:text-purple-400">${activeTasks.length}</div><div class="text-xs text-slate-400">جاري</div></div>
@@ -902,7 +1191,9 @@
             db.staff.filter(s => s.type === 'marketer').forEach(m => {
                 const mOrders = db.orders.filter(o => o.marketerId == m.id && o.status !== 'rejected');
                 const totalSales = mOrders.reduce((sum, o) => sum + parseFloat(o.price), 0);
-                const commissionVal = (totalSales * (parseFloat(m.commission) || 0)) / 100;
+                const totalPaid = mOrders.reduce((sum, o) => sum + parseFloat(o.paid), 0);
+                // Commission based on COLLECTED amounts (Deposits + Full Payments)
+                const commissionVal = (totalPaid * (parseFloat(m.commission) || 0)) / 100;
 
                 const card = document.createElement('div');
                 card.className = "bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 card-hover relative overflow-hidden";
@@ -924,12 +1215,19 @@
                             <span class="text-slate-500 dark:text-slate-400 text-sm">المبيعات</span>
                             <span class="font-bold text-slate-800 dark:text-white">${totalSales.toLocaleString()} ج.م</span>
                         </div>
+                        <div class="flex justify-between p-3 bg-slate-50 dark:bg-slate-700 rounded-xl">
+                            <span class="text-slate-500 dark:text-slate-400 text-sm">التحصيلات (عربون/كامل)</span>
+                            <span class="font-bold text-emerald-600 dark:text-emerald-400">${totalPaid.toLocaleString()} ج.م</span>
+                        </div>
                         <div class="flex justify-between items-center p-4 bg-emerald-600 text-white rounded-xl shadow-lg mt-2">
                             <span class="font-bold text-emerald-100">العمولة</span>
                             <span class="font-bold text-xl">${commissionVal.toLocaleString()} ج.م</span>
                         </div>
                     </div>
-                     ${currentUser.role === 'admin' ? `<button onclick="deleteStaff(${m.id})" class="absolute top-4 left-4 text-slate-300 hover:text-red-500"><i class="fas fa-trash"></i></button>` : ''}
+                    <div class="absolute top-4 left-4 flex gap-2">
+                        <button onclick="editStaff(${m.id})" class="text-slate-300 hover:text-blue-500 transition"><i class="fas fa-edit"></i></button>
+                        ${currentUser.role === 'admin' ? `<button onclick="deleteStaff(${m.id})" class="text-slate-300 hover:text-red-500 transition"><i class="fas fa-trash"></i></button>` : ''}
+                    </div>
                 `;
                 container.appendChild(card);
             });
@@ -961,6 +1259,35 @@
             };
             reader.readAsText(file);
         }
+        
+        function changePassword(e) {
+            e.preventDefault();
+            const newPass = document.getElementById('new-system-password').value;
+            if(!newPass) return;
+            
+            if(currentUser) {
+                const userIdx = db.users.findIndex(u => u.id === currentUser.id);
+                if(userIdx !== -1) {
+                    db.users[userIdx].password = newPass;
+                    currentUser.password = newPass;
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    saveDB();
+                    showNotification('تم تغيير كلمة المرور بنجاح', 'success');
+                    document.getElementById('new-system-password').value = '';
+                }
+            }
+        }
+
+        function resetSystem() {
+            if(confirm('هل أنت متأكد تماماً؟ سيتم حذف جميع الطلبات والمدفوعات لبدء موسم جديد! لا يمكن التراجع عن هذا الإجراء.')) {
+                if(confirm('تأكيد نهائي: هل تريد تصفير النظام؟')) {
+                    db.orders = [];
+                    db.payouts = [];
+                    saveDB();
+                    location.reload();
+                }
+            }
+        }
 
         // --- UTILS ---
         function saveDB() {
@@ -970,6 +1297,7 @@
 
         function saveStaff(e) {
             e.preventDefault();
+            const id = document.getElementById('staff-id').value;
             const type = document.getElementById('staff-role').value;
             const name = document.getElementById('staff-name').value;
             const phone = document.getElementById('staff-phone').value;
@@ -979,10 +1307,37 @@
                 extraData.specialty = document.getElementById('staff-specialty').value;
                 extraData.wallet = document.getElementById('staff-wallet').value;
             }
-            db.staff.push({ id: Date.now(), name, type, phone, ...extraData });
+            
+            if (id) {
+                const index = db.staff.findIndex(s => s.id == id);
+                if (index !== -1) {
+                    db.staff[index] = { ...db.staff[index], name, phone, ...extraData };
+                }
+            } else {
+                db.staff.push({ id: Date.now(), name, type, phone, ...extraData });
+            }
+            
             saveDB(); closeModal('staff-modal');
             if(type === 'marketer') renderMarketers(); else renderDesigners();
-            showNotification('تمت الإضافة', 'success');
+            showNotification('تم الحفظ بنجاح', 'success');
+        }
+
+        function editStaff(id) {
+            const staff = db.staff.find(s => s.id == id);
+            if(!staff) return;
+            
+            openModal('staff-modal', staff.type);
+            document.getElementById('staff-id').value = staff.id;
+            document.getElementById('staff-name').value = staff.name;
+            document.getElementById('staff-phone').value = staff.phone;
+            document.getElementById('staff-modal-title').innerText = "تعديل بيانات الموظف";
+
+            if(staff.type === 'marketer') {
+                document.getElementById('staff-commission').value = staff.commission;
+            } else {
+                document.getElementById('staff-specialty').value = staff.specialty;
+                document.getElementById('staff-wallet').value = staff.wallet;
+            }
         }
 
         function deleteStaff(id) {
@@ -1040,6 +1395,361 @@
             const now = Date.now();
             db.orders.forEach(o => { if(o.status === 'pending' && o.designerId && (now - o.dateAssigned > 86400000)) lateCount++; });
             document.getElementById('stat-late-tasks').innerText = lateCount;
+            updateNotifications();
+            
+            renderCharts();
+        }
+
+        function renderCharts() {
+            const ctxStatus = document.getElementById('statusChart').getContext('2d');
+            const ctxMarketer = document.getElementById('marketerChart').getContext('2d');
+            const ctxRevenue = document.getElementById('revenueChart').getContext('2d');
+            
+            // Prepare Data
+            const statusCounts = { pending: 0, review: 0, done: 0, rejected: 0 };
+            db.orders.forEach(o => { if(statusCounts[o.status] !== undefined) statusCounts[o.status]++; });
+
+            const marketerSales = {};
+            db.staff.filter(s => s.type === 'marketer').forEach(m => marketerSales[m.name] = 0);
+            db.orders.forEach(o => {
+                if(o.status !== 'rejected' && o.marketerId) {
+                    const m = db.staff.find(s => s.id == o.marketerId);
+                    if(m) marketerSales[m.name] = (marketerSales[m.name] || 0) + parseFloat(o.price);
+                }
+            });
+
+            // Revenue Data (Last 7 Days)
+            const last7Days = [];
+            const revenueData = [];
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                last7Days.push(d.toLocaleDateString('ar-EG', { weekday: 'short', day: 'numeric' }));
+                
+                const startOfDay = new Date(d.setHours(0,0,0,0)).getTime();
+                const endOfDay = new Date(d.setHours(23,59,59,999)).getTime();
+                
+                const dayRevenue = db.orders.reduce((sum, o) => {
+                    if(o.status !== 'rejected' && o.dateCreated >= startOfDay && o.dateCreated <= endOfDay) {
+                        return sum + (parseFloat(o.paid) || 0);
+                    }
+                    return sum;
+                }, 0);
+                revenueData.push(dayRevenue);
+            }
+
+            // Status Chart
+            if(statusChartInstance) statusChartInstance.destroy();
+            statusChartInstance = new Chart(ctxStatus, {
+                type: 'doughnut',
+                data: {
+                    labels: ['قيد التنفيذ', 'مراجعة', 'مكتمل', 'مرفوض'],
+                    datasets: [{
+                        data: [statusCounts.pending, statusCounts.review, statusCounts.done, statusCounts.rejected],
+                        backgroundColor: ['#f59e0b', '#3b82f6', '#10b981', '#ef4444'],
+                        borderWidth: 0
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { font: { family: 'Tajawal' } } } } }
+            });
+
+            // Marketer Chart
+            if(marketerChartInstance) marketerChartInstance.destroy();
+            marketerChartInstance = new Chart(ctxMarketer, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(marketerSales),
+                    datasets: [{
+                        label: 'المبيعات (ج.م)',
+                        data: Object.values(marketerSales),
+                        backgroundColor: '#6366f1',
+                        borderRadius: 5
+                    }]
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    scales: { y: { beginAtZero: true } },
+                    plugins: { legend: { display: false }, tooltip: { bodyFont: { family: 'Tajawal' } } }
+                }
+            });
+
+            // Revenue Chart
+            if(revenueChartInstance) revenueChartInstance.destroy();
+            revenueChartInstance = new Chart(ctxRevenue, {
+                type: 'line',
+                data: {
+                    labels: last7Days,
+                    datasets: [{
+                        label: 'الإيرادات (ج.م)',
+                        data: revenueData,
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: '#10b981',
+                        pointBorderWidth: 2
+                    }]
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    scales: { y: { beginAtZero: true } },
+                    plugins: { legend: { display: false }, tooltip: { bodyFont: { family: 'Tajawal' } } }
+                }
+            });
+        }
+
+        function printInvoice(id) {
+            const order = db.orders.find(o => o.id == id);
+            if(!order) return;
+            
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html dir="rtl">
+                <head>
+                    <title>فاتورة #${order.id}</title>
+                    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+                    <style>
+                        body { font-family: 'Tajawal', sans-serif; background-color: #f8f9fa; padding: 20px; -webkit-print-color-adjust: exact; }
+                        .invoice-box { max-width: 800px; margin: auto; padding: 30px; border: 1px solid #eee; box-shadow: 0 0 10px rgba(0, 0, 0, 0.15); background: white; font-size: 16px; line-height: 24px; color: #555; }
+                        .header { text-align: center; margin-bottom: 40px; border-bottom: 2px solid #f3f4f6; padding-bottom: 20px; }
+                        .header img { max-height: 80px; margin-bottom: 10px; }
+                        .header h1 { margin: 0; color: #1e293b; font-size: 24px; font-weight: 800; }
+                        .header p { margin: 5px 0; color: #64748b; font-size: 14px; }
+                        
+                        .info-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+                        .info-table td { padding: 12px; border-bottom: 1px solid #f1f5f9; }
+                        .info-table td:first-child { font-weight: bold; color: #334155; width: 150px; }
+                        
+                        .total-section { background: #f8fafc; padding: 20px; border-radius: 10px; }
+                        .row { display: flex; justify-content: space-between; margin-bottom: 10px; }
+                        .row.final { border-top: 2px solid #cbd5e1; margin-top: 10px; padding-top: 10px; font-weight: bold; font-size: 1.2em; color: #0f172a; }
+                        
+                        .footer { margin-top: 50px; padding-top: 20px; border-top: 1px dashed #cbd5e1; text-align: center; font-size: 12px; color: #94a3b8; }
+                        .footer h4 { margin: 0 0 10px; color: #475569; font-size: 14px; }
+                        .footer p { margin: 2px 0; }
+                        
+                        @media print {
+                            body { background: white; padding: 0; }
+                            .invoice-box { box-shadow: none; border: none; padding: 0; max-width: 100%; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="invoice-box">
+                        <div class="header">
+                            <img src="https://via.placeholder.com/150x80?text=LOGO" alt="Logo">
+                            <h1>فاتورة طلب خدمة</h1>
+                            <p>رقم المرجع: #${order.id}</p>
+                            <p>تاريخ الطباعة: ${new Date().toLocaleDateString('ar-EG')}</p>
+                        </div>
+
+                        <table class="info-table">
+                            <tr><td>العميل:</td><td>${order.client}</td></tr>
+                            <tr><td>رقم الهاتف:</td><td>${order.phone}</td></tr>
+                            <tr><td>الخدمة:</td><td>${order.service}</td></tr>
+                            <tr><td>تاريخ الإنشاء:</td><td>${new Date(order.dateCreated).toLocaleDateString('ar-EG')}</td></tr>
+                        </table>
+
+                        <div class="total-section">
+                            <div class="row"><span>الإجمالي:</span> <span>${parseFloat(order.price).toLocaleString()} ج.م</span></div>
+                            <div class="row"><span>المدفوع:</span> <span>${parseFloat(order.paid).toLocaleString()} ج.م</span></div>
+                            <div class="row final" style="color: ${(order.price - order.paid) > 0 ? '#dc2626' : '#16a34a'}"><span>المتبقي:</span> <span>${(order.price - order.paid).toLocaleString()} ج.م</span></div>
+                        </div>
+
+                        <div class="footer">
+                            <h4>الشروط والأحكام</h4>
+                            <p>1. العربون المدفوع لا يسترد في حالة بدء العمل.</p>
+                            <p>2. يتم تسليم الملفات النهائية (Source Files) بعد سداد كامل المبلغ المتبقي.</p>
+                            <p>3. التعديلات المجانية متاحة مرتين فقط بعد التسليم الأولي.</p>
+                            <p style="margin-top: 15px; font-weight: bold;">شكراً لثقتكم بنا!</p>
+                        </div>
+                    </div>
+                    <script>window.onload = function() { window.print(); }<\/script>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+        }
+
+        function sendWhatsApp(id) {
+            const order = db.orders.find(o => o.id == id);
+            if(!order) return;
+
+            let phone = order.phone.replace(/\D/g, '');
+            // افتراض أن الأرقام مصرية، إذا بدأت بـ 01 يتم استبدال الصفر بـ 20
+            if (phone.startsWith('01')) phone = '2' + phone; 
+
+            const remaining = order.price - order.paid;
+            const message = `مرحباً ${order.client}، 👋
+
+إليك تفاصيل فاتورة طلبك رقم #${order.id}:
+📌 الخدمة: ${order.service}
+💰 الإجمالي: ${parseFloat(order.price).toLocaleString()} ج.م
+✅ المدفوع: ${parseFloat(order.paid).toLocaleString()} ج.م
+❗ المتبقي: ${remaining.toLocaleString()} ج.م
+
+شكراً لثقتك بنا! 🌹`;
+
+            const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+            window.open(url, '_blank');
+        }
+
+        // --- NOTIFICATIONS SYSTEM ---
+        function toggleNotificationMenu() {
+            const menu = document.getElementById('notification-menu');
+            menu.classList.toggle('hidden');
+        }
+
+        // Close menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const container = document.getElementById('notification-bell-container');
+            const menu = document.getElementById('notification-menu');
+            if (container && !container.contains(event.target)) {
+                menu.classList.add('hidden');
+            }
+        });
+
+        function updateNotifications() {
+            const list = document.getElementById('notification-list');
+            const badge = document.getElementById('notification-badge');
+            const now = Date.now();
+            
+            const lateOrders = db.orders.filter(o => 
+                o.status === 'pending' && 
+                o.designerId && 
+                (now - o.dateAssigned > 86400000)
+            );
+
+            if (lateOrders.length > 0) {
+                badge.classList.remove('hidden');
+                list.innerHTML = '';
+                lateOrders.forEach(o => {
+                    const timeDiff = now - o.dateAssigned;
+                    const hoursLate = Math.floor(timeDiff / (1000 * 60 * 60));
+                    list.innerHTML += `
+                        <div class="p-3 bg-red-50 dark:bg-red-900/10 rounded-xl border border-red-100 dark:border-red-900/30 cursor-pointer hover:bg-red-100 dark:hover:bg-red-900/20 transition" onclick="editOrder(${o.id}); toggleNotificationMenu()">
+                            <div class="flex justify-between items-start">
+                                <h4 class="font-bold text-sm text-slate-800 dark:text-slate-200">#${o.id} ${o.client}</h4>
+                                <span class="text-[10px] font-bold text-red-500 bg-white dark:bg-slate-800 px-1.5 py-0.5 rounded border border-red-200 dark:border-red-800">${hoursLate}س</span>
+                            </div>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">الخدمة: ${o.service}</p>
+                        </div>`;
+                });
+            } else {
+                badge.classList.add('hidden');
+                list.innerHTML = `<div class="text-center py-8 text-slate-400 text-sm"><i class="fas fa-check-circle text-2xl mb-2 text-emerald-500"></i><br>لا توجد تنبيهات</div>`;
+            }
+        }
+
+        // --- REPORT LOGIC ---
+        function openReportModal() {
+            const now = new Date();
+            const monthStr = now.toISOString().slice(0, 7); // YYYY-MM
+            document.getElementById('report-month').value = monthStr;
+            renderReportTable();
+            document.getElementById('report-modal').classList.remove('hidden');
+        }
+
+        function renderReportTable() {
+            const monthVal = document.getElementById('report-month').value;
+            if(!monthVal) return;
+            
+            const [year, month] = monthVal.split('-').map(Number);
+            const tbody = document.getElementById('report-table-body');
+            const tfoot = document.getElementById('report-table-footer');
+            const tbodyDesigners = document.getElementById('report-designers-body');
+            
+            tbody.innerHTML = '';
+            tbodyDesigners.innerHTML = '';
+            
+            let grandTotalSales = 0;
+            let grandCollectedComm = 0;
+            let grandPayouts = 0;
+
+            db.staff.filter(s => s.type === 'marketer').forEach(m => {
+                // Filter orders for this marketer in the selected month
+                const mOrders = db.orders.filter(o => {
+                    const d = new Date(o.dateCreated);
+                    return o.marketerId == m.id && 
+                           d.getMonth() === (month - 1) && 
+                           d.getFullYear() === year && 
+                           o.status !== 'rejected';
+                });
+
+                const commRate = parseFloat(m.commission) || 0;
+                const totalSales = mOrders.reduce((sum, o) => sum + parseFloat(o.price), 0);
+                
+                // Calculate commission based on ALL non-rejected orders (Deposits count)
+                const totalPaid = mOrders.reduce((sum, o) => sum + parseFloat(o.paid), 0);
+                const collectedComm = (totalPaid * commRate) / 100; 
+                
+                // Calculate Payouts for this month
+                const mPayouts = db.payouts.filter(p => {
+                    const d = new Date(p.date);
+                    return p.staffId == m.id && d.getMonth() === (month - 1) && d.getFullYear() === year;
+                });
+                const totalPayouts = mPayouts.reduce((sum, p) => sum + parseFloat(p.amount), 0);
+                const payoutNotes = mPayouts.map(p => p.notes).filter(n => n).join(' | ');
+
+                grandTotalSales += totalSales;
+                grandCollectedComm += collectedComm;
+                grandPayouts += totalPayouts;
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+                        <td class="p-4 font-bold">${m.name} <span class="text-xs text-slate-400">(${commRate}%)</span></td>
+                        <td class="p-4">${totalSales.toLocaleString()} ج.م</td>
+                        <td class="p-4 text-blue-600 dark:text-blue-400 font-bold">${collectedComm.toLocaleString()} ج.م</td>
+                        <td class="p-4 text-emerald-600 dark:text-emerald-400 font-bold">${totalPayouts.toLocaleString()} ج.م</td>
+                        <td class="p-4 text-xs text-slate-500 max-w-[200px] truncate" title="${payoutNotes}">${payoutNotes}</td>
+                        <td class="p-4 text-center">
+                            <button onclick="openPayoutModal(${m.id}, '${m.name}')" class="bg-emerald-100 text-emerald-600 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/50 w-8 h-8 rounded-lg transition"><i class="fas fa-hand-holding-usd"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            if(tbody.innerHTML === '') {
+                tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-slate-400">لا توجد بيانات</td></tr>';
+            }
+
+            tfoot.innerHTML = `
+                <td class="p-4">الإجمالي الكلي</td>
+                <td class="p-4">${grandTotalSales.toLocaleString()} ج.م</td>
+                <td class="p-4 text-blue-600 dark:text-blue-400">${grandCollectedComm.toLocaleString()} ج.م</td>
+                <td class="p-4 text-emerald-600 dark:text-emerald-400">${grandPayouts.toLocaleString()} ج.م</td>
+                <td></td>
+                <td></td>
+            `;
+
+            // Render Designers
+            db.staff.filter(s => s.type === 'designer').forEach(d => {
+                const dPayouts = db.payouts.filter(p => {
+                    const date = new Date(p.date);
+                    return p.staffId == d.id && date.getMonth() === (month - 1) && date.getFullYear() === year;
+                });
+                const totalDPayouts = dPayouts.reduce((sum, p) => sum + parseFloat(p.amount), 0);
+                const dPayoutNotes = dPayouts.map(p => p.notes).filter(n => n).join(' | ');
+
+                tbodyDesigners.innerHTML += `
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+                        <td class="p-4 font-bold">${d.name}</td>
+                        <td class="p-4 text-slate-500">${d.specialty}</td>
+                        <td class="p-4 text-emerald-600 dark:text-emerald-400 font-bold">${totalDPayouts.toLocaleString()} ج.م</td>
+                        <td class="p-4 text-xs text-slate-500 max-w-[200px] truncate" title="${dPayoutNotes}">${dPayoutNotes}</td>
+                        <td class="p-4 text-center">
+                            <button onclick="openPayoutModal(${d.id}, '${d.name}')" class="bg-emerald-100 text-emerald-600 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/50 w-8 h-8 rounded-lg transition"><i class="fas fa-hand-holding-usd"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            if(tbodyDesigners.innerHTML === '') {
+                tbodyDesigners.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-slate-400">لا يوجد مصممين</td></tr>';
+            }
         }
 
         function populateStaffSelects() {
@@ -1053,6 +1763,7 @@
 
         function openModal(modalId, type = null) {
             if(modalId === 'staff-modal') {
+                document.getElementById('staff-id').value = ''; // Clear ID for new add
                 document.getElementById('staff-role').value = type;
                 document.getElementById('marketer-fields').classList.add('hidden');
                 document.getElementById('designer-fields').classList.add('hidden');
@@ -1069,6 +1780,7 @@
                 document.getElementById('modal-title').innerText = "طلب جديد";
                 document.getElementById('amount-remaining').value = '0';
                 document.getElementById('amount-remaining').classList.remove('bg-emerald-50', 'text-emerald-600');
+                document.getElementById('order-commission-preview').classList.add('hidden');
                 populateStaffSelects();
                 document.querySelector('input[name="status-radio"][value="pending"]').checked = true;
                 document.getElementById('order-status').value = 'pending';
@@ -1079,6 +1791,29 @@
 
         function closeModal(modalId) {
             document.getElementById(modalId).classList.add('hidden');
+        }
+
+        function openPayoutModal(id, name) {
+            document.getElementById('payout-staff-id').value = id;
+            document.getElementById('payout-staff-name').value = name;
+            document.getElementById('payout-amount').value = '';
+            document.getElementById('payout-date').value = new Date().toISOString().split('T')[0];
+            document.getElementById('payout-notes').value = '';
+            document.getElementById('payout-modal').classList.remove('hidden');
+        }
+
+        function savePayout(e) {
+            e.preventDefault();
+            const staffId = document.getElementById('payout-staff-id').value;
+            const amount = parseFloat(document.getElementById('payout-amount').value);
+            const date = document.getElementById('payout-date').value;
+            const notes = document.getElementById('payout-notes').value;
+            
+            db.payouts.push({ id: Date.now(), staffId, amount, date, notes });
+            saveDB();
+            closeModal('payout-modal');
+            renderReportTable(); // Refresh report to show new value
+            showNotification('تم تسجيل الدفعة بنجاح', 'success');
         }
 
         function showNotification(msg, type = 'success') {
