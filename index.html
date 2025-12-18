@@ -155,6 +155,10 @@
                     <span class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition"><i class="fas fa-clipboard-list"></i></span>
                     الطلبات والعملاء
                 </button>
+                <button onclick="switchTab('deliveries')" id="nav-deliveries" class="nav-btn w-full text-right px-4 py-3.5 rounded-xl hover:bg-slate-800 transition flex items-center gap-3 text-slate-300 font-medium group">
+                    <span class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center group-hover:bg-pink-600 group-hover:text-white transition"><i class="fas fa-truck"></i></span>
+                    التسليمات والمواعيد
+                </button>
                 <button onclick="switchTab('collections')" id="nav-collections" class="nav-btn w-full text-right px-4 py-3.5 rounded-xl hover:bg-slate-800 transition flex items-center gap-3 text-slate-300 font-medium group">
                     <span class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center group-hover:bg-teal-600 group-hover:text-white transition"><i class="fas fa-money-bill-wave"></i></span>
                     التحصيلات والمالية
@@ -226,7 +230,7 @@
             </div>
 
             <!-- STATS CARDS -->
-            <div id="stats-overview" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 fade-in">
+            <div id="stats-overview" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8 fade-in">
                 <!-- Total Orders -->
                 <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 card-hover">
                     <div class="flex justify-between items-start">
@@ -245,6 +249,16 @@
                             <h3 class="text-2xl font-black text-emerald-600 dark:text-emerald-400 dir-ltr" id="stat-revenue">0</h3>
                         </div>
                         <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center"><i class="fas fa-wallet text-lg"></i></div>
+                    </div>
+                </div>
+                <!-- Net Profit -->
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 card-hover">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase mb-1">صافي الربح</p>
+                            <h3 class="text-2xl font-black text-blue-600 dark:text-blue-400 dir-ltr" id="stat-net-profit">0</h3>
+                        </div>
+                        <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center"><i class="fas fa-chart-line text-lg"></i></div>
                     </div>
                 </div>
                 <!-- Debt (New Logic) -->
@@ -304,6 +318,10 @@
                     </div>
                     
                     <div class="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+                        <button onclick="filterToday()" class="relative px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition shadow-sm whitespace-nowrap">
+                            <i class="fas fa-calendar-day text-indigo-500"></i> طلبات اليوم
+                            <span id="today-orders-badge" class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full hidden shadow-sm">0</span>
+                        </button>
                         <!-- Date Filter -->
                         <div class="relative w-full md:w-40">
                             <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 pointer-events-none"><i class="fas fa-calendar-alt"></i></span>
@@ -365,12 +383,77 @@
                 </div>
             </div>
 
+            <!-- TAB: DELIVERIES (New) -->
+            <div id="tab-deliveries" class="tab-content hidden-section fade-in">
+                <!-- Delivery Stats -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                        <div>
+                            <p class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase mb-1">تسليمات اليوم</p>
+                            <h3 class="text-2xl font-black text-slate-800 dark:text-white" id="del-today-count">0</h3>
+                        </div>
+                        <div class="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center"><i class="fas fa-calendar-day"></i></div>
+                    </div>
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                        <div>
+                            <p class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase mb-1">تسليمات غداً</p>
+                            <h3 class="text-2xl font-black text-slate-800 dark:text-white" id="del-tmrw-count">0</h3>
+                        </div>
+                        <div class="w-10 h-10 rounded-xl bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 flex items-center justify-center"><i class="fas fa-sun"></i></div>
+                    </div>
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                        <div>
+                            <p class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase mb-1">متأخرة</p>
+                            <h3 class="text-2xl font-black text-red-600 dark:text-red-400" id="del-late-count">0</h3>
+                        </div>
+                        <div class="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 flex items-center justify-center"><i class="fas fa-exclamation-circle"></i></div>
+                    </div>
+                </div>
+
+                <!-- Deliveries Table -->
+                <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                    <div class="p-6 border-b border-slate-100 dark:border-slate-700 flex flex-col md:flex-row justify-between items-center gap-4">
+                        <div>
+                            <h3 class="font-bold text-lg text-slate-800 dark:text-white">جدول التسليمات</h3>
+                            <div class="text-sm text-slate-500">مرتبة حسب الأقرب للتسليم</div>
+                        </div>
+                        <div class="relative w-full md:w-64">
+                            <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 pointer-events-none"><i class="fas fa-search"></i></span>
+                            <input type="text" id="search-deliveries" onkeyup="renderDeliveries()" class="w-full pr-10 pl-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 dark:text-white" placeholder="بحث في التسليمات...">
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-right">
+                            <thead class="bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 text-xs uppercase font-bold tracking-wider">
+                                <tr>
+                                    <th class="p-5">تاريخ التسليم</th>
+                                    <th class="p-5">العميل</th>
+                                    <th class="p-5">الخدمة</th>
+                                    <th class="p-5">المتبقي</th>
+                                    <th class="p-5">المصمم</th>
+                                    <th class="p-5">الحالة</th>
+                                    <th class="p-5 text-center">إجراء</th>
+                                </tr>
+                            </thead>
+                            <tbody id="deliveries-table-body" class="text-sm divide-y divide-slate-100 dark:divide-slate-700 font-medium text-slate-700 dark:text-slate-200">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
             <!-- TAB 2: COLLECTIONS (New) -->
             <div id="tab-collections" class="tab-content hidden-section fade-in">
                 <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
-                    <div class="p-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
-                        <h3 class="font-bold text-lg text-slate-800 dark:text-white">سجل التحصيلات والديون</h3>
-                        <div class="text-sm text-slate-500">يعرض هذا الجدول الحالة المالية وحالة الطلب فقط</div>
+                    <div class="p-6 border-b border-slate-100 dark:border-slate-700 flex flex-col md:flex-row justify-between items-center gap-4">
+                        <div>
+                            <h3 class="font-bold text-lg text-slate-800 dark:text-white">سجل التحصيلات والديون</h3>
+                            <div class="text-sm text-slate-500">يعرض هذا الجدول الحالة المالية وحالة الطلب فقط</div>
+                        </div>
+                        <div class="relative w-full md:w-64">
+                            <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 pointer-events-none"><i class="fas fa-search"></i></span>
+                            <input type="text" id="search-collections" onkeyup="renderCollections()" class="w-full pr-10 pl-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 dark:text-white" placeholder="بحث (عميل، رقم)...">
+                        </div>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-right">
@@ -394,7 +477,7 @@
 
             <!-- TAB 3: MARKETERS -->
             <div id="tab-marketers" class="tab-content hidden-section fade-in">
-                <div class="flex justify-between items-center mb-6">
+                <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
                     <div class="flex gap-3">
                         <button onclick="openModal('staff-modal', 'marketer')" class="bg-emerald-600 text-white px-6 py-2.5 rounded-xl hover:bg-emerald-700 shadow-lg shadow-emerald-500/30 transition font-bold">
                             <i class="fas fa-plus"></i> إضافة مسوق
@@ -402,6 +485,10 @@
                         <button onclick="openReportModal()" class="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 px-6 py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition font-bold">
                             <i class="fas fa-chart-pie text-emerald-500"></i> تقرير العمولات
                         </button>
+                    </div>
+                    <div class="relative w-full md:w-64">
+                        <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 pointer-events-none"><i class="fas fa-search"></i></span>
+                        <input type="text" id="search-marketers" onkeyup="renderMarketers()" class="w-full pr-10 pl-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 dark:text-white" placeholder="بحث عن مسوق...">
                     </div>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="marketers-grid">
@@ -411,10 +498,14 @@
 
             <!-- TAB 4: DESIGNERS -->
             <div id="tab-designers" class="tab-content hidden-section fade-in">
-                <div class="flex justify-between items-center mb-6">
+                <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
                     <button onclick="openModal('staff-modal', 'designer')" class="bg-purple-600 text-white px-6 py-2.5 rounded-xl hover:bg-purple-700 shadow-lg shadow-purple-500/30 transition font-bold">
                         <i class="fas fa-plus"></i> إضافة مصمم
                     </button>
+                    <div class="relative w-full md:w-64">
+                        <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 pointer-events-none"><i class="fas fa-search"></i></span>
+                        <input type="text" id="search-designers" onkeyup="renderDesigners()" class="w-full pr-10 pl-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 dark:text-white" placeholder="بحث عن مصمم...">
+                    </div>
                 </div>
                 <div class="grid grid-cols-1 gap-6" id="designers-grid">
                     <!-- JS Generated -->
@@ -423,10 +514,14 @@
 
             <!-- TAB 5: USERS -->
             <div id="tab-users" class="tab-content hidden-section fade-in">
-                <div class="flex justify-between items-center mb-6">
+                <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
                     <button onclick="openModal('user-modal')" class="bg-slate-800 dark:bg-slate-700 text-white px-6 py-2.5 rounded-xl hover:bg-slate-900 shadow-lg transition font-bold">
                         <i class="fas fa-user-shield"></i> إضافة مستخدم
                     </button>
+                    <div class="relative w-full md:w-64">
+                        <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 pointer-events-none"><i class="fas fa-search"></i></span>
+                        <input type="text" id="search-users" onkeyup="renderUsers()" class="w-full pr-10 pl-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 dark:text-white" placeholder="بحث عن مستخدم...">
+                    </div>
                 </div>
                 <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden max-w-3xl mx-auto">
                     <table class="w-full text-right">
@@ -456,6 +551,24 @@
                             </div>
                             <button type="submit" class="bg-indigo-600 text-white px-6 py-3 rounded-xl hover:bg-indigo-700 font-bold transition">تحديث</button>
                         </form>
+                    </div>
+
+                    <!-- Activity Log -->
+                    <div class="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+                        <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-4 border-b dark:border-slate-700 pb-2"><i class="fas fa-history text-slate-500"></i> سجل النشاطات (آخر 50 عملية)</h3>
+                        <div class="overflow-x-auto max-h-80 overflow-y-auto rounded-xl border border-slate-100 dark:border-slate-700">
+                            <table class="w-full text-right">
+                                <thead class="bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 text-xs uppercase font-bold sticky top-0 shadow-sm z-10">
+                                    <tr>
+                                        <th class="p-3">التوقيت</th>
+                                        <th class="p-3">المستخدم</th>
+                                        <th class="p-3">الحدث</th>
+                                        <th class="p-3">التفاصيل</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="activity-log-body" class="divide-y divide-slate-100 dark:divide-slate-700"></tbody>
+                            </table>
+                        </div>
                     </div>
 
                     <!-- Backup -->
@@ -513,7 +626,7 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-5">
                     <div>
                         <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">نوع الخدمة</label>
                         <select id="service-type" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 dark:text-white transition">
@@ -527,6 +640,10 @@
                             <option value="شهادة">📜 شهادة (Certificate)</option>
                             <option value="منيو">🍽️ منيو (Menu)</option>
                         </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">تاريخ التسليم</label>
+                        <input type="date" id="delivery-date" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 dark:text-white transition">
                     </div>
                     <div>
                         <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">إجمالي السعر</label>
@@ -564,6 +681,14 @@
                         <select id="order-designer" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 dark:text-white transition">
                             <option value="">-- اختر مصمم --</option>
                         </select>
+                    </div>
+                </div>
+
+                <div class="mb-5 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-3"><i class="fas fa-layer-group text-indigo-500"></i> تفاصيل التصميم والملفات</label>
+                    <div class="grid grid-cols-1 gap-3">
+                        <input type="text" id="design-link" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 dark:text-white transition text-sm" placeholder="🔗 رابط ملفات التصميم (Google Drive / Dropbox / Images URL)">
+                        <textarea id="design-notes" rows="2" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 dark:text-white transition text-sm" placeholder="📝 ملاحظات إضافية للتصميم..."></textarea>
                     </div>
                 </div>
 
@@ -641,15 +766,28 @@
     <!-- USER MODAL -->
     <div id="user-modal" class="fixed inset-0 bg-slate-900/80 hidden z-50 flex items-center justify-center backdrop-blur-sm p-4">
         <div class="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-md p-8 shadow-2xl border border-slate-200 dark:border-slate-700">
-            <h3 class="text-xl font-bold mb-6 text-slate-800 dark:text-white">إضافة مستخدم جديد</h3>
+            <h3 class="text-xl font-bold mb-6 text-slate-800 dark:text-white" id="user-modal-title">إضافة مستخدم جديد</h3>
             <form onsubmit="saveUser(event)">
+                <input type="hidden" id="user-id">
                 <div class="mb-4">
                     <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">اسم المستخدم</label>
                     <input type="text" id="new-username" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 dark:text-white" required>
                 </div>
                 <div class="mb-4">
-                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">كلمة المرور</label>
-                    <input type="text" id="new-password" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 dark:text-white" required>
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">كلمة المرور <span class="text-xs font-normal text-slate-400">(اتركها فارغة عند التعديل للإبقاء عليها)</span></label>
+                    <input type="text" id="new-password" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 dark:text-white">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-3">صلاحيات الوصول للصفحات</label>
+                    <div class="grid grid-cols-2 gap-3 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="perm-checkbox w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500" value="orders"><span class="text-sm text-slate-600 dark:text-slate-400">الطلبات</span></label>
+                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="perm-checkbox w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500" value="deliveries"><span class="text-sm text-slate-600 dark:text-slate-400">التسليمات</span></label>
+                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="perm-checkbox w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500" value="collections"><span class="text-sm text-slate-600 dark:text-slate-400">التحصيلات</span></label>
+                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="perm-checkbox w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500" value="marketers"><span class="text-sm text-slate-600 dark:text-slate-400">المسوقين</span></label>
+                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="perm-checkbox w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500" value="designers"><span class="text-sm text-slate-600 dark:text-slate-400">المصممين</span></label>
+                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="perm-checkbox w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500" value="users"><span class="text-sm text-slate-600 dark:text-slate-400">المستخدمين</span></label>
+                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="perm-checkbox w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500" value="settings"><span class="text-sm text-slate-600 dark:text-slate-400">الإعدادات</span></label>
+                    </div>
                 </div>
                 <div class="mb-6">
                     <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">الدور</label>
@@ -658,7 +796,7 @@
                         <option value="admin">مدير (Admin)</option>
                     </select>
                 </div>
-                <button type="submit" class="w-full bg-slate-800 dark:bg-slate-700 text-white py-3 rounded-xl hover:bg-slate-900 dark:hover:bg-slate-600 font-bold">إضافة</button>
+                <button type="submit" class="w-full bg-slate-800 dark:bg-slate-700 text-white py-3 rounded-xl hover:bg-slate-900 dark:hover:bg-slate-600 font-bold">حفظ البيانات</button>
                 <button type="button" onclick="closeModal('user-modal')" class="w-full mt-2 py-3 text-slate-500 dark:text-slate-400">إلغاء</button>
             </form>
         </div>
@@ -760,11 +898,13 @@
             users: [{ id: 1, username: 'admin', password: 'admin', role: 'admin' }],
             staff: [],
             orders: [],
-            payouts: []
+            payouts: [],
+            logs: []
         };
 
         let db = JSON.parse(localStorage.getItem('agencyDB')) || defaultData;
         if(!db.payouts) db.payouts = []; // Ensure payouts exists for old data
+        if(!db.logs) db.logs = []; // Ensure logs exists
         let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
 
         // Chart Instances
@@ -839,16 +979,19 @@
         function initDashboard() {
             renderOrders();
             renderStats();
-            
-            const userBtn = document.getElementById('nav-users');
-            if (currentUser.role !== 'admin') userBtn.classList.add('hidden');
-            else userBtn.classList.remove('hidden');
+            applyPermissions();
             
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('bg-slate-800', 'text-white'));
             document.getElementById('nav-orders').classList.add('bg-slate-800', 'text-white');
         }
 
         function switchTab(tabName) {
+            // Permission Check
+            if (currentUser.role !== 'admin' && currentUser.permissions && !currentUser.permissions.includes(tabName)) {
+                showNotification('ليس لديك صلاحية للوصول لهذه الصفحة', 'error');
+                return;
+            }
+
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden-section'));
             document.querySelectorAll('.nav-btn').forEach(el => {
                 el.classList.remove('bg-slate-800', 'text-white');
@@ -871,8 +1014,25 @@
             
             if(tabName === 'marketers') renderMarketers();
             if(tabName === 'collections') renderCollections();
+            if(tabName === 'deliveries') renderDeliveries();
             if(tabName === 'designers') renderDesigners();
             if(tabName === 'users') renderUsers();
+            if(tabName === 'settings') renderLogs();
+        }
+
+        function applyPermissions() {
+            const allTabs = ['orders', 'deliveries', 'collections', 'marketers', 'designers', 'users', 'settings'];
+            
+            if (currentUser.role === 'admin') {
+                allTabs.forEach(t => document.getElementById('nav-' + t)?.classList.remove('hidden'));
+            } else {
+                const perms = currentUser.permissions || [];
+                allTabs.forEach(t => {
+                    const el = document.getElementById('nav-' + t);
+                    if(perms.includes(t)) el?.classList.remove('hidden');
+                    else el?.classList.add('hidden');
+                });
+            }
         }
 
         function toggleMobileMenu() {
@@ -923,8 +1083,22 @@
                     ? '<span class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 flex items-center justify-center mx-auto"><i class="fas fa-check"></i></span>' 
                     : '<span class="w-8 h-8 rounded-full bg-slate-100 text-slate-300 dark:bg-slate-700 dark:text-slate-500 flex items-center justify-center mx-auto"><i class="fas fa-times"></i></span>';
 
+                let rowClass = "hover:bg-slate-50 dark:hover:bg-slate-800 transition border-b border-slate-50 dark:border-slate-800 last:border-0";
+                
+                if (order.deliveryDate && order.status !== 'done' && order.status !== 'rejected') {
+                    const now = new Date();
+                    const today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+                    const tmrw = new Date(now);
+                    tmrw.setDate(tmrw.getDate() + 1);
+                    const tomorrow = tmrw.getFullYear() + '-' + String(tmrw.getMonth() + 1).padStart(2, '0') + '-' + String(tmrw.getDate()).padStart(2, '0');
+
+                    if (order.deliveryDate < today) rowClass = "bg-red-100/60 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 transition border-b border-red-200 dark:border-red-800 last:border-0";
+                    else if (order.deliveryDate === today) rowClass = "bg-red-50 hover:bg-red-100 dark:bg-red-900/10 dark:hover:bg-red-900/20 transition border-b border-red-100 dark:border-red-900/30 last:border-0";
+                    else if (order.deliveryDate === tomorrow) rowClass = "bg-orange-50 hover:bg-orange-100 dark:bg-orange-900/10 dark:hover:bg-orange-900/20 transition border-b border-orange-100 dark:border-orange-900/30 last:border-0";
+                }
+
                 const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50 dark:hover:bg-slate-800 transition border-b border-slate-50 dark:border-slate-800 last:border-0";
+                tr.className = rowClass;
                 tr.innerHTML = `
                     <td class="p-5" data-label="العميل">
                         <div>
@@ -932,7 +1106,12 @@
                             <div class="text-xs text-slate-400 font-mono mt-1">${order.phone}</div>
                         </div>
                     </td>
-                    <td class="p-5" data-label="الخدمة"><span class="bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 px-2 py-1 rounded text-xs font-bold">${order.service}</span></td>
+                    <td class="p-5" data-label="الخدمة">
+                        <span class="bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 px-2 py-1 rounded text-xs font-bold">${order.service}</span>
+                        ${order.deliveryDate ? `<div class="text-xs text-slate-500 mt-1"><i class="fas fa-calendar-alt ml-1"></i> ${order.deliveryDate}</div>` : ''}
+                        ${order.designNotes ? `<div class="text-[10px] text-slate-500 mt-1 bg-slate-50 dark:bg-slate-800 p-1 rounded border border-slate-100 dark:border-slate-700 truncate max-w-[150px]" title="${order.designNotes}"><i class="fas fa-sticky-note text-yellow-500"></i> ${order.designNotes}</div>` : ''}
+                        ${order.designLink ? `<a href="${order.designLink}" target="_blank" class="text-[10px] text-blue-500 hover:underline mt-1 block"><i class="fas fa-link"></i> رابط الملفات</a>` : ''}
+                    </td>
                     <td class="p-5" data-label="المالية">
                         <div>
                             <div class="font-bold text-slate-800 dark:text-slate-200">${parseFloat(order.price).toLocaleString()} ج.م</div>
@@ -958,6 +1137,11 @@
             });
         }
 
+        function filterToday() {
+            document.getElementById('filter-date').value = 'today';
+            renderOrders();
+        }
+
         function updateStatusSelect(val) {
             document.getElementById('order-status').value = val;
         }
@@ -971,6 +1155,9 @@
                 client: document.getElementById('client-name').value,
                 phone: document.getElementById('client-phone').value,
                 service: document.getElementById('service-type').value,
+                deliveryDate: document.getElementById('delivery-date').value,
+                designLink: document.getElementById('design-link').value,
+                designNotes: document.getElementById('design-notes').value,
                 price: parseFloat(document.getElementById('order-price').value) || 0,
                 paid: parseFloat(document.getElementById('amount-paid').value) || 0,
                 deposit: document.getElementById('deposit-paid').checked,
@@ -991,9 +1178,12 @@
                     dateAssigned = Date.now();
                 }
                 db.orders[index] = { ...existing, ...newOrder, dateAssigned };
+                logActivity('تعديل طلب', `تم تعديل بيانات الطلب #${id} للعميل ${newOrder.client}`);
             } else {
                 if (newOrder.designerId) dateAssigned = Date.now();
-                db.orders.push({ id: Date.now(), ...newOrder, dateCreated, dateAssigned });
+                const newId = Date.now();
+                db.orders.push({ id: newId, ...newOrder, dateCreated, dateAssigned });
+                logActivity('إضافة طلب', `تم إضافة طلب جديد #${newId} للعميل ${newOrder.client}`);
             }
 
             saveDB();
@@ -1011,6 +1201,9 @@
             document.getElementById('client-name').value = order.client;
             document.getElementById('client-phone').value = order.phone;
             document.getElementById('service-type').value = order.service;
+            document.getElementById('delivery-date').value = order.deliveryDate || '';
+            document.getElementById('design-link').value = order.designLink || '';
+            document.getElementById('design-notes').value = order.designNotes || '';
             document.getElementById('order-price').value = order.price;
             document.getElementById('amount-paid').value = order.paid;
             document.getElementById('deposit-paid').checked = order.deposit;
@@ -1029,8 +1222,10 @@
 
         function deleteOrder(id) {
             if(confirm('حذف هذا الطلب؟')) {
+                const order = db.orders.find(o => o.id == id);
                 db.orders = db.orders.filter(o => o.id != id);
                 saveDB(); renderOrders();
+                logActivity('حذف طلب', `تم حذف الطلب #${id} للعميل ${order ? order.client : 'غير معروف'}`);
                 showNotification('تم الحذف', 'warning');
             }
         }
@@ -1067,17 +1262,96 @@
             }
         }
 
+        // --- DELIVERIES LOGIC ---
+        function renderDeliveries() {
+            const tbody = document.getElementById('deliveries-table-body');
+            tbody.innerHTML = '';
+            const search = document.getElementById('search-deliveries').value.toLowerCase();
+
+            const now = new Date();
+            const todayStr = now.toISOString().split('T')[0];
+
+            // Filter orders that have a delivery date and are not rejected
+            // Sort by delivery date ascending (earliest first)
+            const deliveryOrders = db.orders
+                .filter(o => o.deliveryDate && o.status !== 'rejected' && (o.status !== 'done' || o.deliveryDate === todayStr) &&
+                             (o.client.toLowerCase().includes(search) || o.service.toLowerCase().includes(search))
+                )
+                .sort((a, b) => new Date(a.deliveryDate) - new Date(b.deliveryDate));
+
+            // Stats Calculation
+            const tmrw = new Date(now); tmrw.setDate(tmrw.getDate() + 1);
+            const tmrwStr = tmrw.toISOString().split('T')[0];
+
+            let todayCount = 0;
+            let tmrwCount = 0;
+            let lateCount = 0;
+
+            deliveryOrders.forEach(order => {
+                if (order.deliveryDate === todayStr) todayCount++;
+                else if (order.deliveryDate === tmrwStr) tmrwCount++;
+                else if (order.deliveryDate < todayStr) lateCount++;
+
+                const designer = db.staff.find(s => s.id == order.designerId)?.name || '<span class="text-slate-400">---</span>';
+                const remaining = order.price - order.paid;
+                
+                let dateClass = "text-slate-700 dark:text-slate-300";
+                let dateIcon = "fa-calendar-alt";
+                if (order.deliveryDate < todayStr) { dateClass = "text-red-600 font-bold"; dateIcon = "fa-exclamation-circle"; }
+                else if (order.deliveryDate === todayStr) { dateClass = "text-indigo-600 font-bold"; dateIcon = "fa-star"; }
+                else if (order.deliveryDate === tmrwStr) { dateClass = "text-orange-500 font-bold"; dateIcon = "fa-clock"; }
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 dark:hover:bg-slate-800 transition border-b border-slate-50 dark:border-slate-800 last:border-0";
+                tr.innerHTML = `
+                    <td class="p-5">
+                        <div class="${dateClass} flex items-center gap-2">
+                            <i class="fas ${dateIcon}"></i>
+                            <span dir="ltr">${order.deliveryDate}</span>
+                        </div>
+                    </td>
+                    <td class="p-5 font-bold">${order.client}</td>
+                    <td class="p-5"><span class="bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded text-xs">${order.service}</span></td>
+                    <td class="p-5 ${remaining > 0 ? 'text-red-500 font-bold' : 'text-emerald-500'}">${remaining > 0 ? remaining.toLocaleString() + ' ج.م' : 'خالص'}</td>
+                    <td class="p-5 text-sm">${designer}</td>
+                    <td class="p-5">
+                        <span class="px-2 py-1 rounded text-xs font-bold ${order.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : (order.status === 'done' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700')}">
+                            ${order.status === 'pending' ? 'قيد التنفيذ' : (order.status === 'done' ? 'مكتمل' : 'مراجعة')}
+                        </span>
+                    </td>
+                    <td class="p-5 text-center">
+                        <div class="flex justify-center gap-2">
+                            <button onclick="editOrder(${order.id})" class="text-blue-500 hover:text-blue-700 transition" title="تعديل"><i class="fas fa-edit"></i></button>
+                            <button onclick="sendDeliveryWhatsApp(${order.id})" class="text-green-500 hover:text-green-700 transition" title="إرسال واتساب (تسليم)"><i class="fab fa-whatsapp"></i></button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('del-today-count').innerText = todayCount;
+            document.getElementById('del-tmrw-count').innerText = tmrwCount;
+            document.getElementById('del-late-count').innerText = lateCount;
+
+            if(deliveryOrders.length === 0) tbody.innerHTML = '<tr><td colspan="7" class="p-8 text-center text-slate-400">لا توجد تسليمات قادمة</td></tr>';
+        }
+
         // --- COLLECTIONS LOGIC ---
         function renderCollections() {
             const tbody = document.getElementById('collections-table-body');
             const tfoot = document.getElementById('collections-table-footer');
+            const search = document.getElementById('search-collections').value.toLowerCase();
             tbody.innerHTML = '';
             
             let totalPrices = 0;
             let totalPaid = 0;
             let totalDebt = 0;
 
-            db.orders.forEach(order => {
+            const sortedOrders = db.orders
+                .filter(o => o.client.toLowerCase().includes(search) || o.id.toString().includes(search))
+                .sort((a, b) => b.dateCreated - a.dateCreated);
+
+            sortedOrders.forEach(order => {
                 const remaining = order.price - order.paid;
                 totalPrices += parseFloat(order.price);
                 totalPaid += parseFloat(order.paid);
@@ -1119,8 +1393,9 @@
         function renderDesigners() {
             const container = document.getElementById('designers-grid');
             container.innerHTML = '';
+            const search = document.getElementById('search-designers').value.toLowerCase();
             
-            db.staff.filter(s => s.type === 'designer').forEach(d => {
+            db.staff.filter(s => s.type === 'designer' && (s.name.toLowerCase().includes(search) || s.specialty.toLowerCase().includes(search))).forEach(d => {
                 const activeTasks = db.orders.filter(o => o.designerId == d.id && (o.status === 'pending' || o.status === 'review'));
                 const completedTasks = db.orders.filter(o => o.designerId == d.id && o.status === 'done');
 
@@ -1187,8 +1462,9 @@
         function renderMarketers() {
             const container = document.getElementById('marketers-grid');
             container.innerHTML = '';
+            const search = document.getElementById('search-marketers').value.toLowerCase();
             
-            db.staff.filter(s => s.type === 'marketer').forEach(m => {
+            db.staff.filter(s => s.type === 'marketer' && (s.name.toLowerCase().includes(search) || s.phone.includes(search))).forEach(m => {
                 const mOrders = db.orders.filter(o => o.marketerId == m.id && o.status !== 'rejected');
                 const totalSales = mOrders.reduce((sum, o) => sum + parseFloat(o.price), 0);
                 const totalPaid = mOrders.reduce((sum, o) => sum + parseFloat(o.paid), 0);
@@ -1289,6 +1565,51 @@
             }
         }
 
+        // --- ACTIVITY LOG LOGIC ---
+        function logActivity(action, details) {
+            if(!db.logs) db.logs = [];
+            const user = currentUser ? currentUser.username : 'System';
+            db.logs.unshift({
+                id: Date.now(),
+                user,
+                action,
+                details,
+                timestamp: Date.now()
+            });
+            // Keep only last 1000 logs to prevent storage bloat
+            if(db.logs.length > 1000) db.logs = db.logs.slice(0, 1000);
+            // Note: saveDB() is usually called after this in the parent function
+        }
+
+        function renderLogs() {
+            const container = document.getElementById('activity-log-body');
+            if(!container) return;
+            container.innerHTML = '';
+            const logs = db.logs || [];
+            
+            if(logs.length === 0) {
+                container.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-slate-400">لا يوجد نشاطات مسجلة</td></tr>';
+                return;
+            }
+
+            logs.slice(0, 50).forEach(log => {
+                const date = new Date(log.timestamp).toLocaleString('ar-EG');
+                let actionClass = 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300';
+                if(log.action.includes('إضافة')) actionClass = 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400';
+                if(log.action.includes('تعديل')) actionClass = 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
+                if(log.action.includes('حذف')) actionClass = 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+
+                container.innerHTML += `
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition text-sm">
+                        <td class="p-3 text-slate-500 dark:text-slate-400 font-mono text-xs">${date}</td>
+                        <td class="p-3 font-bold text-slate-800 dark:text-slate-200">${log.user}</td>
+                        <td class="p-3"><span class="px-2 py-1 rounded text-xs font-bold ${actionClass}">${log.action}</span></td>
+                        <td class="p-3 text-slate-600 dark:text-slate-300">${log.details}</td>
+                    </tr>
+                `;
+            });
+        }
+
         // --- UTILS ---
         function saveDB() {
             localStorage.setItem('agencyDB', JSON.stringify(db));
@@ -1351,34 +1672,90 @@
         
         function saveUser(e) {
             e.preventDefault();
+            const id = document.getElementById('user-id').value;
             const u = document.getElementById('new-username').value;
             const p = document.getElementById('new-password').value;
             const r = document.getElementById('new-role').value;
-            if(db.users.find(usr => usr.username === u)) { showNotification('المستخدم موجود', 'error'); return; }
-            db.users.push({ id: Date.now(), username: u, password: p, role: r });
+            
+            // Collect Permissions
+            const perms = [];
+            document.querySelectorAll('.perm-checkbox:checked').forEach(cb => perms.push(cb.value));
+
+            if (id) {
+                // Edit Mode
+                const index = db.users.findIndex(usr => usr.id == id);
+                if (index !== -1) {
+                    const existing = db.users[index];
+                    // Check duplicate username if changed
+                    if (existing.username !== u && db.users.find(usr => usr.username === u)) { showNotification('اسم المستخدم موجود بالفعل', 'error'); return; }
+                    
+                    db.users[index] = { 
+                        ...existing, 
+                        username: u, 
+                        role: r, 
+                        permissions: perms,
+                        password: p ? p : existing.password // Update password only if provided
+                    };
+                }
+            } else {
+                // Add Mode
+                if(db.users.find(usr => usr.username === u)) { showNotification('المستخدم موجود', 'error'); return; }
+                if(!p) { showNotification('كلمة المرور مطلوبة', 'error'); return; }
+                db.users.push({ id: Date.now(), username: u, password: p, role: r, permissions: perms });
+            }
+
             saveDB(); closeModal('user-modal'); renderUsers();
-            showNotification('تمت الإضافة', 'success');
+            showNotification('تم الحفظ بنجاح', 'success');
         }
 
         function renderUsers() {
             const tbody = document.getElementById('users-table-body');
             tbody.innerHTML = '';
-            db.users.forEach(u => {
+            const search = document.getElementById('search-users').value.toLowerCase();
+            
+            db.users.filter(u => u.username.toLowerCase().includes(search)).forEach(u => {
+                const permsCount = u.role === 'admin' ? 'الكل' : (u.permissions ? u.permissions.length : 0);
                 tbody.innerHTML += `
                     <tr class="border-b border-slate-50 dark:border-slate-700 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-700">
                         <td class="p-4 font-bold text-slate-700 dark:text-slate-200">${u.username}</td>
-                        <td class="p-4"><span class="px-3 py-1 rounded-full ${u.role === 'admin' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400' : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400'} text-xs font-bold">${u.role === 'admin' ? 'مدير كامل' : 'مساعد'}</span></td>
                         <td class="p-4">
-                            ${u.username !== 'admin' ? `<button onclick="deleteUser(${u.id})" class="text-red-400 hover:text-red-600"><i class="fas fa-trash"></i></button>` : '<span class="text-slate-300"><i class="fas fa-lock"></i></span>'}
+                            <span class="px-3 py-1 rounded-full ${u.role === 'admin' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400' : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400'} text-xs font-bold">${u.role === 'admin' ? 'مدير كامل' : 'مساعد'}</span>
+                            ${u.role !== 'admin' ? `<span class="text-xs text-slate-400 mr-2">(${permsCount} صلاحيات)</span>` : ''}
+                        </td>
+                        <td class="p-4">
+                            <div class="flex gap-3">
+                                <button onclick="editUser(${u.id})" class="text-blue-400 hover:text-blue-600 transition"><i class="fas fa-edit"></i></button>
+                                ${u.username !== 'admin' ? `<button onclick="deleteUser(${u.id})" class="text-red-400 hover:text-red-600 transition"><i class="fas fa-trash"></i></button>` : '<span class="text-slate-300"><i class="fas fa-lock"></i></span>'}
+                            </div>
                         </td>
                     </tr>`;
             });
+        }
+
+        function editUser(id) {
+            const user = db.users.find(u => u.id == id);
+            if(!user) return;
+
+            document.getElementById('user-id').value = user.id;
+            document.getElementById('new-username').value = user.username;
+            document.getElementById('new-password').value = ''; // Don't show password
+            document.getElementById('new-role').value = user.role;
+            document.getElementById('user-modal-title').innerText = "تعديل المستخدم";
+
+            // Set Permissions
+            const perms = user.permissions || [];
+            document.querySelectorAll('.perm-checkbox').forEach(cb => {
+                cb.checked = perms.includes(cb.value);
+            });
+
+            openModal('user-modal');
         }
         
         function deleteUser(id) {
             if(confirm('حذف المستخدم؟')) {
                 db.users = db.users.filter(u => u.id != id);
                 saveDB(); renderUsers();
+                logActivity('حذف مستخدم', `تم حذف المستخدم ID: ${id}`);
             }
         }
 
@@ -1391,6 +1768,21 @@
             const debt = db.orders.filter(o => o.status !== 'rejected').reduce((sum, o) => sum + (parseFloat(o.price) - parseFloat(o.paid)), 0);
             document.getElementById('stat-debt').innerText = debt.toLocaleString() + ' ج.م';
             
+            // Net Profit Logic
+            const totalPayouts = db.payouts.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+            const netProfit = revenue - totalPayouts;
+            document.getElementById('stat-net-profit').innerText = netProfit.toLocaleString() + ' ج.م';
+
+            // Today's Orders Badge
+            const todayStr = new Date().toDateString();
+            const todayCount = db.orders.filter(o => new Date(o.dateCreated).toDateString() === todayStr).length;
+            const todayBadge = document.getElementById('today-orders-badge');
+            if (todayBadge) {
+                todayBadge.innerText = todayCount;
+                if (todayCount > 0) todayBadge.classList.remove('hidden');
+                else todayBadge.classList.add('hidden');
+            }
+
             let lateCount = 0;
             const now = Date.now();
             db.orders.forEach(o => { if(o.status === 'pending' && o.designerId && (now - o.dateAssigned > 86400000)) lateCount++; });
@@ -1597,6 +1989,31 @@
             window.open(url, '_blank');
         }
 
+        function sendDeliveryWhatsApp(id) {
+            const order = db.orders.find(o => o.id == id);
+            if(!order) return;
+
+            let phone = order.phone.replace(/\D/g, '');
+            if (phone.startsWith('01')) phone = '2' + phone; 
+
+            let message = `مرحباً ${order.client}، 👋\n\n`;
+            message += `يسعدنا إخبارك بأن طلبك (${order.service}) جاهز للتسليم! 🚀\n\n`;
+            
+            if(order.designLink) {
+                message += `🔗 رابط التصميم/الملفات:\n${order.designLink}\n\n`;
+            }
+
+            const remaining = order.price - order.paid;
+            if(remaining > 0) {
+                message += `❗ يرجى العلم أن هناك مبلغ متبقي: ${remaining.toLocaleString()} ج.م\n\n`;
+            }
+
+            message += `شكراً لتعاملك معنا! 🌹`;
+
+            const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+            window.open(url, '_blank');
+        }
+
         // --- NOTIFICATIONS SYSTEM ---
         function toggleNotificationMenu() {
             const menu = document.getElementById('notification-menu');
@@ -1779,11 +2196,21 @@
                 document.getElementById('order-id').value = '';
                 document.getElementById('modal-title').innerText = "طلب جديد";
                 document.getElementById('amount-remaining').value = '0';
+                document.getElementById('design-link').value = '';
+                document.getElementById('design-notes').value = '';
                 document.getElementById('amount-remaining').classList.remove('bg-emerald-50', 'text-emerald-600');
                 document.getElementById('order-commission-preview').classList.add('hidden');
                 populateStaffSelects();
                 document.querySelector('input[name="status-radio"][value="pending"]').checked = true;
                 document.getElementById('order-status').value = 'pending';
+            } else if (modalId === 'user-modal') {
+                // Reset user modal if opened directly (Add mode)
+                if(!document.getElementById('user-id').value) {
+                    document.getElementById('new-username').value = '';
+                    document.getElementById('new-password').value = '';
+                    document.querySelectorAll('.perm-checkbox').forEach(cb => cb.checked = false);
+                    document.getElementById('user-modal-title').innerText = "إضافة مستخدم جديد";
+                }
             }
             const el = document.getElementById(modalId);
             el.classList.remove('hidden');
