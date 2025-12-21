@@ -251,6 +251,10 @@
                     <span class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center group-hover:bg-red-600 group-hover:text-white transition"><i class="fas fa-file-invoice-dollar"></i></span>
                     الحوافز والخصومات
                 </button>
+                <button onclick="switchTab('profits')" id="nav-profits" class="nav-btn w-full text-right px-4 py-3.5 rounded-xl hover:bg-slate-800 transition flex items-center gap-3 text-slate-300 font-medium group">
+                    <span class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-white transition"><i class="fas fa-chart-line"></i></span>
+                    الأرباح والتقارير
+                </button>
                 <button onclick="switchTab('my-tasks')" id="nav-my-tasks" class="nav-btn w-full text-right px-4 py-3.5 rounded-xl hover:bg-slate-800 transition flex items-center gap-3 text-slate-300 font-medium group hidden">
                     <span class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center group-hover:bg-yellow-600 group-hover:text-white transition"><i class="fas fa-tasks"></i></span>
                     مهامي (المطلوب)
@@ -670,6 +674,75 @@
                         </thead>
                         <tbody id="adjustments-table-body" class="divide-y divide-slate-100 dark:divide-slate-700 text-slate-700 dark:text-slate-300"></tbody>
                     </table>
+                </div>
+            </div>
+
+            <!-- TAB: PROFITS (New) -->
+            <div id="tab-profits" class="tab-content hidden-section fade-in">
+                <!-- Header & Filter -->
+                <div class="flex justify-between items-center mb-6 bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+                    <h3 class="font-bold text-slate-800 dark:text-white text-lg">صافي الأرباح والتقارير المالية</h3>
+                    <div class="flex items-center gap-2">
+                        <label class="text-sm font-bold text-slate-500">الفترة:</label>
+                        <input type="month" id="profits-month-filter" onchange="renderProfits()" class="bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm dark:text-white outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-2 h-full bg-emerald-500"></div>
+                        <p class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase mb-2">إجمالي الإيرادات (المدفوع)</p>
+                        <h3 class="text-3xl font-black text-emerald-600 dark:text-emerald-400" id="profit-revenue">0</h3>
+                        <p class="text-xs text-slate-400 mt-2">من الطلبات في هذه الفترة</p>
+                    </div>
+                    <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-2 h-full bg-red-500"></div>
+                        <p class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase mb-2">إجمالي المصروفات</p>
+                        <h3 class="text-3xl font-black text-red-600 dark:text-red-400" id="profit-expenses">0</h3>
+                        <p class="text-xs text-slate-400 mt-2">رواتب + عمولات + خصومات</p>
+                    </div>
+                    <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-2 h-full bg-blue-500"></div>
+                        <p class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase mb-2">صافي الربح</p>
+                        <h3 class="text-3xl font-black text-blue-600 dark:text-blue-400" id="profit-net">0</h3>
+                        <p class="text-xs text-slate-400 mt-2">الإيرادات - المصروفات</p>
+                    </div>
+                    <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-2 h-full bg-orange-500"></div>
+                        <p class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase mb-2">الديون (غير محصل)</p>
+                        <h3 class="text-3xl font-black text-orange-600 dark:text-orange-400" id="profit-debt">0</h3>
+                        <p class="text-xs text-slate-400 mt-2">متبقي من طلبات الفترة</p>
+                    </div>
+                </div>
+
+                <!-- Chart -->
+                <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 mb-8">
+                    <h4 class="font-bold text-slate-700 dark:text-slate-300 mb-4">تحليل الأداء المالي</h4>
+                    <div class="h-80 w-full relative">
+                        <canvas id="profitsChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Detailed Table -->
+                <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                    <div class="p-4 border-b border-slate-100 dark:border-slate-700">
+                        <h4 class="font-bold text-slate-700 dark:text-slate-300">سجل العمليات المالية (أحدث 50 عملية)</h4>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-right">
+                            <thead class="bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 text-xs uppercase font-bold">
+                                <tr>
+                                    <th class="p-4">التاريخ</th>
+                                    <th class="p-4">النوع</th>
+                                    <th class="p-4">الوصف</th>
+                                    <th class="p-4">المبلغ</th>
+                                    <th class="p-4 text-red-500">المتبقي (ديون)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="profits-table-body" class="divide-y divide-slate-100 dark:divide-slate-700 text-sm"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
@@ -1401,6 +1474,7 @@
         let revenueChartInstance = null;
         let designerChartInstance = null;
         let sourceChartInstance = null;
+        let profitsChartInstance = null;
 
         // Dark Mode Logic
         function toggleDarkMode() {
@@ -1512,6 +1586,7 @@
             if(tabName === 'collections') renderCollections();
             if(tabName === 'deliveries') renderDeliveries();
             if(tabName === 'designers') renderDesigners();
+            if(tabName === 'profits') renderProfits();
             if(tabName === 'users') renderUsers();
             if(tabName === 'settings') { renderLogs(); renderSettingsServiceTypes(); renderSettingsSources(); }
             if(tabName === 'my-tasks') renderMyTasks();
@@ -1519,7 +1594,7 @@
         }
 
         function applyPermissions() {
-            const allTabs = ['orders', 'deliveries', 'collections', 'marketers', 'designers', 'users', 'settings', 'clients', 'adjustments', 'my-tasks', 'profile'];
+            const allTabs = ['orders', 'deliveries', 'collections', 'marketers', 'designers', 'users', 'settings', 'clients', 'adjustments', 'my-tasks', 'profile', 'profits'];
             
             if (currentUser.role === 'admin') {
                 allTabs.forEach(t => document.getElementById('nav-' + t)?.classList.remove('hidden'));
@@ -2273,6 +2348,91 @@
                 window.firebaseAPI.delete('adjustments', id);
                 saveDB(); renderAdjustments();
             }
+        }
+
+        // --- PROFITS LOGIC ---
+        function renderProfits() {
+            const filterEl = document.getElementById('profits-month-filter');
+            if(!filterEl.value) {
+                const now = new Date();
+                filterEl.value = now.toISOString().slice(0, 7);
+            }
+            const [year, month] = filterEl.value.split('-').map(Number);
+
+            // 1. Calculate Revenue (From Orders created in this month)
+            const periodOrders = db.orders.filter(o => {
+                const d = new Date(o.dateCreated);
+                return d.getFullYear() === year && (d.getMonth() + 1) === month && o.status !== 'rejected';
+            });
+            const revenue = periodOrders.reduce((sum, o) => sum + (parseFloat(o.paid) || 0), 0);
+
+            // 2. Calculate Expenses (Payouts in this month)
+            const periodPayouts = db.payouts.filter(p => {
+                const d = new Date(p.date);
+                return d.getFullYear() === year && (d.getMonth() + 1) === month;
+            });
+            const expenses = periodPayouts.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+
+            // 3. Net
+            const net = revenue - expenses;
+
+            // 4. Debt (Remaining from period orders)
+            const debt = periodOrders.reduce((sum, o) => sum + (parseFloat(o.price) - parseFloat(o.paid)), 0);
+
+            // Update UI
+            document.getElementById('profit-revenue').innerText = revenue.toLocaleString() + ' ' + getCurrency();
+            document.getElementById('profit-expenses').innerText = expenses.toLocaleString() + ' ' + getCurrency();
+            document.getElementById('profit-net').innerText = net.toLocaleString() + ' ' + getCurrency();
+            document.getElementById('profit-debt').innerText = debt.toLocaleString() + ' ' + getCurrency();
+
+            // Update Chart
+            const ctx = document.getElementById('profitsChart').getContext('2d');
+            if(profitsChartInstance) profitsChartInstance.destroy();
+            
+            profitsChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['الإيرادات', 'المصروفات', 'صافي الربح', 'الديون'],
+                    datasets: [{
+                        label: 'المالية',
+                        data: [revenue, expenses, net, debt],
+                        backgroundColor: ['#10b981', '#ef4444', '#3b82f6', '#f97316'],
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // Update Table
+            const tbody = document.getElementById('profits-table-body');
+            tbody.innerHTML = '';
+            
+            let transactions = [];
+            periodOrders.forEach(o => {
+                const debt = parseFloat(o.price) - parseFloat(o.paid);
+                if(o.paid > 0 || debt > 0) {
+                    transactions.push({ date: o.dateCreated, type: 'income', desc: `طلب #${o.id} - ${o.client}`, amount: parseFloat(o.paid), debt: debt });
+                }
+            });
+            periodPayouts.forEach(p => {
+                transactions.push({ date: new Date(p.date).getTime(), type: 'expense', desc: `صرف لـ ${db.staff.find(s=>s.id==p.staffId)?.name || 'موظف'}`, amount: parseFloat(p.amount), debt: 0 });
+            });
+
+            transactions.sort((a,b) => b.date - a.date);
+
+            transactions.slice(0, 50).forEach(t => {
+                const dateStr = new Date(t.date).toLocaleDateString('ar-EG');
+                const typeHtml = t.type === 'income' ? '<span class="text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded text-xs font-bold">إيراد</span>' : '<span class="text-red-600 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded text-xs font-bold">مصروف</span>';
+                const debtHtml = t.debt > 0 ? `<span class="text-red-500 font-bold">${t.debt.toLocaleString()} ${getCurrency()}</span>` : '<span class="text-slate-400">-</span>';
+                tbody.innerHTML += `
+                    <tr class="border-b border-slate-50 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800">
+                        <td class="p-4 text-slate-500 font-mono">${dateStr}</td><td class="p-4">${typeHtml}</td><td class="p-4 text-slate-700 dark:text-slate-300">${t.desc}</td><td class="p-4 font-bold ${t.type === 'income' ? 'text-emerald-600' : 'text-red-600'}">${t.amount.toLocaleString()} ${getCurrency()}</td><td class="p-4">${debtHtml}</td>
+                    </tr>`;
+            });
         }
 
         // --- BACKUP & RESTORE ---
