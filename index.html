@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام الوكالة الاحترافي | Pro Agency</title>
+    <title>DM</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -25,6 +25,72 @@
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script type="module">
+      // Import the functions you need from the SDKs you need
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+      import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-analytics.js";
+      import { getFirestore, collection, getDocs, setDoc, doc, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+      // TODO: Add SDKs for Firebase products that you want to use
+      // https://firebase.google.com/docs/web/setup#available-libraries
+
+      // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+      const firebaseConfig = {
+        apiKey: "AIzaSyB5aT_4wx3fXD_3uyz7bMtGUbG1ECaRMYI",
+        authDomain: "dmcode-eafe2.firebaseapp.com",
+        projectId: "dmcode-eafe2",
+        storageBucket: "dmcode-eafe2.firebasestorage.app",
+        messagingSenderId: "1011397956804",
+        appId: "1:1011397956804:web:9ec42580702e2d130d6591",
+        measurementId: "G-Z23YM2RBH7"
+      };
+
+      // Initialize Firebase
+      const app = initializeApp(firebaseConfig);
+      const analytics = getAnalytics(app);
+      const firestoreDB = getFirestore(app);
+
+      // Expose Firebase to global scope
+      window.firebaseApp = app;
+      
+      // Firebase API Helper
+      window.firebaseAPI = {
+          async loadData() {
+              const data = { orders: [], staff: [], users: [], payouts: [], logs: [], clients: [], settings: [], adjustments: [] };
+              const collections = ['orders', 'staff', 'users', 'payouts', 'logs', 'clients', 'settings', 'adjustments'];
+              
+              try {
+                  for (const colName of collections) {
+                      const querySnapshot = await getDocs(collection(firestoreDB, colName));
+                      querySnapshot.forEach((doc) => {
+                          data[colName].push(doc.data());
+                      });
+                  }
+              } catch (error) {
+                  console.error("Error loading data:", error);
+                  alert("حدث خطأ أثناء تحميل البيانات من السيرفر");
+              }
+              return data;
+          },
+          async save(col, id, data) {
+              await setDoc(doc(firestoreDB, col, String(id)), data);
+          },
+          async delete(col, id) {
+              await deleteDoc(doc(firestoreDB, col, String(id)));
+          },
+          async clearCollection(colName, ids) {
+              const batch = writeBatch(firestoreDB);
+              ids.forEach(id => {
+                  const docRef = doc(firestoreDB, colName, String(id));
+                  batch.delete(docRef);
+              });
+              await batch.commit();
+          }
+      };
+      
+      // Trigger app init when ready
+      window.dispatchEvent(new Event('firebase-ready'));
+    </script>
     
     <style>
         body { font-family: 'Tajawal', sans-serif; }
@@ -92,6 +158,12 @@
 </head>
 <body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 antialiased selection:bg-indigo-500 selection:text-white transition-colors duration-300">
 
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="fixed inset-0 bg-slate-900 z-[200] flex flex-col items-center justify-center text-white transition-opacity duration-500">
+        <div class="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <h2 class="text-xl font-bold">جاري الاتصال بقاعدة البيانات...</h2>
+    </div>
+
     <!-- Notifications -->
     <div id="notification-area" class="fixed top-6 left-6 z-[100] flex flex-col gap-3 pointer-events-none"></div>
 
@@ -103,7 +175,7 @@
                 <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-indigo-600 text-white mb-6 shadow-lg rotate-3 hover:rotate-6 transition duration-300">
                     <i class="fas fa-cube text-4xl"></i>
                 </div>
-                <h2 class="text-3xl font-extrabold text-slate-800 dark:text-white">بوابة الإدارة</h2>
+                <h2 class="text-3xl font-extrabold text-slate-800 dark:text-white" id="login-title">بوابة الإدارة</h2>
                 <p class="text-slate-500 dark:text-slate-400 mt-2 font-medium">نظام الوكالة المتطور</p>
             </div>
             <form id="login-form" onsubmit="handleLogin(event)">
@@ -142,7 +214,7 @@
                         <i class="fas fa-layer-group text-lg"></i>
                     </div>
                     <div>
-                        <h1 class="font-bold text-lg leading-tight">الوكالة</h1>
+                        <h1 class="font-bold text-lg leading-tight" id="sidebar-title">الوكالة</h1>
                         <span class="text-xs text-slate-400 font-normal">لوحة التحكم</span>
                     </div>
                 </div>
@@ -170,6 +242,22 @@
                 <button onclick="switchTab('designers')" id="nav-designers" class="nav-btn w-full text-right px-4 py-3.5 rounded-xl hover:bg-slate-800 transition flex items-center gap-3 text-slate-300 font-medium group">
                     <span class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center group-hover:bg-purple-600 group-hover:text-white transition"><i class="fas fa-palette"></i></span>
                     المصممين
+                </button>
+                <button onclick="switchTab('clients')" id="nav-clients" class="nav-btn w-full text-right px-4 py-3.5 rounded-xl hover:bg-slate-800 transition flex items-center gap-3 text-slate-300 font-medium group">
+                    <span class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center group-hover:bg-orange-600 group-hover:text-white transition"><i class="fas fa-user-tie"></i></span>
+                    العملاء (VIP)
+                </button>
+                <button onclick="switchTab('adjustments')" id="nav-adjustments" class="nav-btn w-full text-right px-4 py-3.5 rounded-xl hover:bg-slate-800 transition flex items-center gap-3 text-slate-300 font-medium group">
+                    <span class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center group-hover:bg-red-600 group-hover:text-white transition"><i class="fas fa-file-invoice-dollar"></i></span>
+                    الحوافز والخصومات
+                </button>
+                <button onclick="switchTab('my-tasks')" id="nav-my-tasks" class="nav-btn w-full text-right px-4 py-3.5 rounded-xl hover:bg-slate-800 transition flex items-center gap-3 text-slate-300 font-medium group hidden">
+                    <span class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center group-hover:bg-yellow-600 group-hover:text-white transition"><i class="fas fa-tasks"></i></span>
+                    مهامي (المطلوب)
+                </button>
+                <button onclick="switchTab('profile')" id="nav-profile" class="nav-btn w-full text-right px-4 py-3.5 rounded-xl hover:bg-slate-800 transition flex items-center gap-3 text-slate-300 font-medium group hidden">
+                    <span class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center group-hover:bg-cyan-600 group-hover:text-white transition"><i class="fas fa-id-card"></i></span>
+                    الملف الشخصي
                 </button>
                 
                 <p class="px-4 text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 mt-6">النظام</p>
@@ -285,6 +373,13 @@
 
             <!-- CHARTS SECTION (New) -->
             <div id="charts-area" class="mb-8 fade-in space-y-6">
+                <div class="flex justify-between items-center bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+                    <h3 class="font-bold text-slate-700 dark:text-slate-300">تحليل البيانات</h3>
+                    <div class="flex items-center gap-2">
+                        <label class="text-sm text-slate-500 dark:text-slate-400 font-bold">الفترة:</label>
+                        <input type="month" id="chart-month-filter" onchange="renderCharts()" class="bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-1.5 text-sm dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none">
+                    </div>
+                </div>
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
                         <h3 class="font-bold text-slate-700 dark:text-slate-300 mb-4 text-sm">توزيع حالات الطلبات</h3>
@@ -300,9 +395,21 @@
                     </div>
                 </div>
                 <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
-                    <h3 class="font-bold text-slate-700 dark:text-slate-300 mb-4 text-sm">الإيرادات اليومية (آخر 7 أيام)</h3>
+                    <h3 class="font-bold text-slate-700 dark:text-slate-300 mb-4 text-sm">الإيرادات اليومية</h3>
                     <div class="h-64 w-full relative">
                         <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+                    <h3 id="chart-title-designers" class="font-bold text-slate-700 dark:text-slate-300 mb-4 text-sm">أداء المصممين (عدد التصاميم المكتملة)</h3>
+                    <div class="h-64 w-full relative">
+                        <canvas id="designerChart"></canvas>
+                    </div>
+                </div>
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+                    <h3 class="font-bold text-slate-700 dark:text-slate-300 mb-4 text-sm">توزيع العملاء حسب المصدر</h3>
+                    <div class="h-64 flex items-center justify-center relative">
+                        <canvas id="sourceChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -512,6 +619,138 @@
                 </div>
             </div>
 
+            <!-- TAB: CLIENTS (VIP) -->
+            <div id="tab-clients" class="tab-content hidden-section fade-in">
+                <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                    <button onclick="openModal('client-modal')" class="bg-orange-600 text-white px-6 py-2.5 rounded-xl hover:bg-orange-700 shadow-lg shadow-orange-500/30 transition font-bold">
+                        <i class="fas fa-plus"></i> إضافة عميل VIP
+                    </button>
+                    <div class="relative w-full md:w-64">
+                        <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 pointer-events-none"><i class="fas fa-search"></i></span>
+                        <input type="text" id="search-clients" onkeyup="renderClients()" class="w-full pr-10 pl-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-orange-500 dark:text-white" placeholder="بحث عن عميل...">
+                    </div>
+                </div>
+                <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                    <table class="w-full text-right">
+                        <thead class="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
+                            <tr>
+                                <th class="p-4 text-slate-500 font-bold">العميل</th>
+                                <th class="p-4 text-slate-500 font-bold">رقم الهاتف</th>
+                                <th class="p-4 text-slate-500 font-bold">رصيد المحفظة</th>
+                                <th class="p-4 text-slate-500 font-bold text-center">إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="clients-table-body" class="divide-y divide-slate-100 dark:divide-slate-700 text-slate-700 dark:text-slate-300"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB: ADJUSTMENTS (BONUS & DEDUCTIONS) -->
+            <div id="tab-adjustments" class="tab-content hidden-section fade-in">
+                <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                    <button onclick="openModal('adjustment-modal')" class="bg-indigo-600 text-white px-6 py-2.5 rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-500/30 transition font-bold">
+                        <i class="fas fa-plus"></i> إضافة حافز / خصم
+                    </button>
+                    <div class="relative w-full md:w-64">
+                        <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 pointer-events-none"><i class="fas fa-search"></i></span>
+                        <input type="text" id="search-adjustments" onkeyup="renderAdjustments()" class="w-full pr-10 pl-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 dark:text-white" placeholder="بحث باسم الموظف...">
+                    </div>
+                </div>
+                <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                    <table class="w-full text-right">
+                        <thead class="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
+                            <tr>
+                                <th class="p-4 text-slate-500 font-bold">التاريخ</th>
+                                <th class="p-4 text-slate-500 font-bold">الموظف</th>
+                                <th class="p-4 text-slate-500 font-bold">النوع</th>
+                                <th class="p-4 text-slate-500 font-bold">المبلغ</th>
+                                <th class="p-4 text-slate-500 font-bold">السبب</th>
+                                <th class="p-4 text-slate-500 font-bold text-center">إجراء</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adjustments-table-body" class="divide-y divide-slate-100 dark:divide-slate-700 text-slate-700 dark:text-slate-300"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB: MY TASKS (New) -->
+            <div id="tab-my-tasks" class="tab-content hidden-section fade-in">
+                <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 mb-6">
+                    <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-2">مهامي المطلوبة</h3>
+                    <p class="text-slate-500 dark:text-slate-400 text-sm">قائمة بالأعمال المسندة إليك والتي لم تكتمل بعد.</p>
+                </div>
+                <div id="my-tasks-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- JS Generated -->
+                </div>
+            </div>
+
+            <!-- TAB: PROFILE (New) -->
+            <div id="tab-profile" class="tab-content hidden-section fade-in">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Profile Card -->
+                    <div class="lg:col-span-1">
+                        <div class="bg-white dark:bg-slate-800 p-8 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 text-center relative overflow-hidden">
+                            <div class="absolute top-0 left-0 w-full h-24 bg-gradient-to-r from-indigo-500 to-purple-600"></div>
+                            <div class="relative w-24 h-24 mx-auto bg-white dark:bg-slate-800 rounded-full p-1 shadow-lg -mt-4 mb-4">
+                                <div class="w-full h-full rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-3xl font-bold text-slate-600 dark:text-slate-300" id="profile-avatar">A</div>
+                            </div>
+                            <h2 class="text-2xl font-bold text-slate-800 dark:text-white mb-1" id="profile-name">User</h2>
+                            <p class="text-indigo-600 dark:text-indigo-400 font-medium mb-6" id="profile-role">Role</p>
+                            
+                            <div class="space-y-4 text-right">
+                                <div class="flex justify-between p-3 bg-slate-50 dark:bg-slate-700/50 rounded-xl">
+                                    <span class="text-slate-500 dark:text-slate-400">اسم المستخدم</span>
+                                    <span class="font-bold text-slate-800 dark:text-white" id="profile-username">-</span>
+                                </div>
+                                <div class="flex justify-between p-3 bg-slate-50 dark:bg-slate-700/50 rounded-xl">
+                                    <span class="text-slate-500 dark:text-slate-400">رقم الهاتف</span>
+                                    <span class="font-bold text-slate-800 dark:text-white" id="profile-phone">-</span>
+                                </div>
+                                <div class="flex justify-between p-3 bg-slate-50 dark:bg-slate-700/50 rounded-xl">
+                                    <span class="text-slate-500 dark:text-slate-400">النسبة / العمولة</span>
+                                    <span class="font-bold text-emerald-600 dark:text-emerald-400" id="profile-commission">0%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Financial Stats -->
+                    <div class="lg:col-span-2 space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+                                <p class="text-slate-500 text-xs font-bold uppercase mb-2">إجمالي الأرباح (الراتب)</p>
+                                <h3 class="text-2xl font-black text-emerald-600 dark:text-emerald-400" id="profile-total-earnings">0</h3>
+                            </div>
+                            <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+                                <p class="text-slate-500 text-xs font-bold uppercase mb-2">أرباح هذا الشهر</p>
+                                <h3 class="text-2xl font-black text-blue-600 dark:text-blue-400" id="profile-month-earnings">0</h3>
+                            </div>
+                            <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+                                <p class="text-slate-500 text-xs font-bold uppercase mb-2">المحفظة (عهدة)</p>
+                                <h3 class="text-2xl font-black text-orange-600 dark:text-orange-400" id="profile-wallet">0</h3>
+                            </div>
+                        </div>
+
+                        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+                            <h3 class="font-bold text-lg text-slate-800 dark:text-white mb-4">سجل الحوافز والخصومات</h3>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-right">
+                                    <thead class="bg-slate-50 dark:bg-slate-900 text-slate-500 text-xs uppercase">
+                                        <tr>
+                                            <th class="p-3">التاريخ</th>
+                                            <th class="p-3">النوع</th>
+                                            <th class="p-3">المبلغ</th>
+                                            <th class="p-3">السبب</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="profile-adjustments-body" class="divide-y divide-slate-100 dark:divide-slate-700 text-sm"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- TAB 5: USERS -->
             <div id="tab-users" class="tab-content hidden-section fade-in">
                 <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
@@ -541,6 +780,64 @@
             <div id="tab-settings" class="tab-content hidden-section fade-in">
                 <div class="max-w-2xl mx-auto space-y-6">
                     
+                    <!-- General Settings -->
+                    <div class="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+                        <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-4 border-b dark:border-slate-700 pb-2"><i class="fas fa-cog text-slate-500"></i> إعدادات النظام</h3>
+                        <form onsubmit="saveAppSettings(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">اسم البرنامج / الوكالة</label>
+                                <input type="text" id="setting-app-name" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 dark:text-white" placeholder="مثلاً: DM Agency">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">رابط الشعار (Logo URL)</label>
+                                <input type="text" id="setting-logo-url" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 dark:text-white" placeholder="https://...">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">بنود الفاتورة (الشروط والأحكام)</label>
+                                <textarea id="setting-invoice-terms" rows="4" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 dark:text-white" placeholder="أدخل الشروط التي ستظهر أسفل الفاتورة..."></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">تخصيص المسميات والعملة</label>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <input type="text" id="setting-currency" class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 dark:text-white" placeholder="العملة (مثلاً: ج.م)">
+                                    <input type="text" id="setting-designer-label-s" class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 dark:text-white" placeholder="مسمى المصمم (مفرد)">
+                                    <input type="text" id="setting-designer-label-p" class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 dark:text-white" placeholder="مسمى المصمم (جمع)">
+                                </div>
+                            </div>
+                            <div class="pt-2">
+                                <button type="submit" class="bg-slate-800 dark:bg-slate-600 text-white px-6 py-3 rounded-xl hover:bg-slate-900 font-bold transition">حفظ الإعدادات</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Service Types Management -->
+                    <div class="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+                        <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-4 border-b dark:border-slate-700 pb-2">
+                            <i class="fas fa-list text-blue-500"></i> أنواع المشاريع / الخدمات
+                        </h3>
+                        <div class="flex gap-2 mb-4">
+                            <input type="text" id="new-service-type" class="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-2 dark:text-white" placeholder="اسم الخدمة الجديدة...">
+                            <button onclick="addServiceType()" class="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 font-bold">إضافة</button>
+                        </div>
+                        <div id="settings-services-list" class="flex flex-wrap gap-2">
+                            <!-- JS Generated -->
+                        </div>
+                    </div>
+
+                    <!-- Sources Management (New) -->
+                    <div class="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+                        <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-4 border-b dark:border-slate-700 pb-2">
+                            <i class="fas fa-share-alt text-pink-500"></i> مصادر العملاء (Facebook, Instagram...)
+                        </h3>
+                        <div class="flex gap-2 mb-4">
+                            <input type="text" id="new-source-type" class="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-2 dark:text-white" placeholder="اسم المصدر الجديد...">
+                            <button onclick="addSource()" class="bg-pink-600 text-white px-4 py-2 rounded-xl hover:bg-pink-700 font-bold">إضافة</button>
+                        </div>
+                        <div id="settings-sources-list" class="flex flex-wrap gap-2">
+                            <!-- JS Generated -->
+                        </div>
+                    </div>
+
                     <!-- Change Password -->
                     <div class="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
                         <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-4 border-b dark:border-slate-700 pb-2"><i class="fas fa-key text-indigo-500"></i> تغيير كلمة المرور</h3>
@@ -615,7 +912,19 @@
             <form id="order-form" onsubmit="saveOrder(event)">
                 <input type="hidden" id="order-id">
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+                <!-- VIP Client Selection -->
+                <div class="mb-5 bg-orange-50 dark:bg-orange-900/20 p-4 rounded-xl border border-orange-100 dark:border-orange-900/30">
+                    <label class="flex items-center gap-2 cursor-pointer mb-2">
+                        <input type="checkbox" id="is-vip-order" onchange="toggleVipMode()" class="w-5 h-5 text-orange-600 rounded focus:ring-orange-500">
+                        <span class="font-bold text-orange-800 dark:text-orange-400">عميل VIP (خصم من المحفظة)</span>
+                    </label>
+                    <div id="vip-selection" class="hidden mt-2">
+                        <select id="vip-client-select" onchange="selectVipClient()" class="w-full bg-white dark:bg-slate-800 border border-orange-200 dark:border-orange-900 rounded-xl px-4 py-2 dark:text-white"></select>
+                        <p id="vip-balance-display" class="text-xs font-bold mt-2 text-slate-500"></p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-5">
                     <div>
                         <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">اسم العميل</label>
                         <input type="text" id="client-name" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 dark:text-white transition" required placeholder="الاسم">
@@ -624,21 +933,19 @@
                         <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">رقم الهاتف</label>
                         <input type="tel" id="client-phone" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 dark:text-white transition" placeholder="01xxxxxxxxx">
                     </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">المصدر</label>
+                        <select id="order-source" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 dark:text-white transition">
+                            <!-- JS Populated -->
+                        </select>
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-5">
                     <div>
                         <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">نوع الخدمة</label>
                         <select id="service-type" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 dark:text-white transition">
-                            <option value="سوشيال ميديا">📱 سوشيال ميديا (Social Media)</option>
-                            <option value="غلاف">🖼️ غلاف (Cover)</option>
-                            <option value="بوستر مراجعة">📢 بوستر مراجعة</option>
-                            <option value="كروت شخصيه">📇 كروت شخصية</option>
-                            <option value="صور مصغرة">▶️ صور مصغرة (Thumbnails)</option>
-                            <option value="لوجو">✒️ لوجو (Logo)</option>
-                            <option value="بانر">🚩 بانر (Banner)</option>
-                            <option value="شهادة">📜 شهادة (Certificate)</option>
-                            <option value="منيو">🍽️ منيو (Menu)</option>
+                            <!-- JS Populated -->
                         </select>
                     </div>
                     <div>
@@ -690,6 +997,11 @@
                         <input type="text" id="design-link" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 dark:text-white transition text-sm" placeholder="🔗 رابط ملفات التصميم (Google Drive / Dropbox / Images URL)">
                         <textarea id="design-notes" rows="2" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 dark:text-white transition text-sm" placeholder="📝 ملاحظات إضافية للتصميم..."></textarea>
                     </div>
+                </div>
+
+                <div class="mb-5">
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2"><i class="fas fa-lock text-red-500"></i> ملاحظات خاصة (لا تظهر للعميل)</label>
+                    <textarea id="private-notes" rows="2" class="w-full bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 rounded-xl px-4 py-3 focus:ring-2 focus:ring-red-500 dark:text-white transition text-sm" placeholder="ملاحظات داخلية للفريق فقط..."></textarea>
                 </div>
 
                 <div class="mb-8">
@@ -750,6 +1062,10 @@
                         <input type="text" id="staff-specialty" class="w-full bg-white dark:bg-slate-800 border border-purple-200 dark:border-purple-900 rounded-xl px-4 py-3 focus:ring-2 focus:ring-purple-500 dark:text-white">
                     </div>
                     <div>
+                        <label class="block text-sm font-bold text-purple-800 dark:text-purple-400 mb-2">نسبة المصمم (%)</label>
+                        <input type="number" id="staff-designer-commission" class="w-full bg-white dark:bg-slate-800 border border-purple-200 dark:border-purple-900 rounded-xl px-4 py-3 focus:ring-2 focus:ring-purple-500 dark:text-white" placeholder="مثلاً: 5">
+                    </div>
+                    <div>
                         <label class="block text-sm font-bold text-purple-800 dark:text-purple-400 mb-2">محفظة (كاش)</label>
                         <input type="text" id="staff-wallet" class="w-full bg-white dark:bg-slate-800 border border-purple-200 dark:border-purple-900 rounded-xl px-4 py-3 focus:ring-2 focus:ring-purple-500 dark:text-white">
                     </div>
@@ -790,15 +1106,131 @@
                     </div>
                 </div>
                 <div class="mb-6">
-                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">الدور</label>
-                    <select id="new-role" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 dark:text-white">
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">نوع الحساب</label>
+                    <select id="new-role" onchange="toggleUserFields()" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 dark:text-white">
                         <option value="assistant">مساعد (Assistant)</option>
                         <option value="admin">مدير (Admin)</option>
+                        <option value="marketer">مسوق (Marketer)</option>
+                        <option value="designer">مصمم (Designer)</option>
                     </select>
                 </div>
+                
+                <div id="user-staff-fields" class="hidden bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800 mb-4">
+                    <h4 class="font-bold text-sm text-slate-700 dark:text-slate-300 mb-3 border-b dark:border-slate-700 pb-2">بيانات الموظف (سيتم إضافته تلقائياً)</h4>
+                    <div class="space-y-3">
+                        <input type="text" id="new-user-realname" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm dark:text-white" placeholder="الاسم الحقيقي">
+                        <input type="text" id="new-user-phone" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm dark:text-white" placeholder="رقم الهاتف">
+                        <input type="number" id="new-user-commission" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm dark:text-white" placeholder="النسبة %">
+                        <input type="text" id="new-user-specialty" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm dark:text-white hidden" placeholder="التخصص (للمصممين)">
+                    </div>
+                </div>
+
                 <button type="submit" class="w-full bg-slate-800 dark:bg-slate-700 text-white py-3 rounded-xl hover:bg-slate-900 dark:hover:bg-slate-600 font-bold">حفظ البيانات</button>
                 <button type="button" onclick="closeModal('user-modal')" class="w-full mt-2 py-3 text-slate-500 dark:text-slate-400">إلغاء</button>
             </form>
+        </div>
+    </div>
+
+    <!-- CLIENT MODAL -->
+    <div id="client-modal" class="fixed inset-0 bg-slate-900/80 hidden z-50 flex items-center justify-center backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-md p-8 shadow-2xl border border-slate-200 dark:border-slate-700 fade-in">
+            <h3 class="text-xl font-bold mb-6 text-slate-800 dark:text-white" id="client-modal-title">إضافة عميل VIP</h3>
+            <form onsubmit="saveClient(event)">
+                <input type="hidden" id="client-id">
+                <div class="mb-4">
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">اسم العميل</label>
+                    <input type="text" id="client-modal-name" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 dark:text-white" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">رقم الهاتف</label>
+                    <input type="text" id="client-modal-phone" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 dark:text-white">
+                </div>
+                <div class="mb-6">
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">الرصيد الافتتاحي</label>
+                    <input type="number" id="client-modal-balance" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 dark:text-white" placeholder="0.00">
+                </div>
+                <div class="flex gap-3">
+                    <button type="submit" class="flex-1 bg-orange-600 text-white py-3 rounded-xl hover:bg-orange-700 font-bold">حفظ</button>
+                    <button type="button" onclick="closeModal('client-modal')" class="px-6 py-3 border rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 font-bold text-slate-600 dark:text-slate-400">إلغاء</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- TOPUP MODAL -->
+    <div id="topup-modal" class="fixed inset-0 bg-slate-900/80 hidden z-[60] flex items-center justify-center backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-sm p-8 shadow-2xl border border-slate-200 dark:border-slate-700 fade-in">
+            <h3 class="text-xl font-bold mb-4 text-slate-800 dark:text-white">شحن محفظة</h3>
+            <p id="topup-client-name" class="text-slate-500 mb-6 font-bold"></p>
+            <form onsubmit="saveTopUp(event)">
+                <input type="hidden" id="topup-client-id">
+                <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">المبلغ المراد إضافته</label>
+                <input type="number" id="topup-amount" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 mb-6 font-bold text-lg dark:text-white" required>
+                <button type="submit" class="w-full bg-emerald-600 text-white py-3 rounded-xl hover:bg-emerald-700 font-bold mb-2">تأكيد الشحن</button>
+                <button type="button" onclick="closeModal('topup-modal')" class="w-full py-3 text-slate-500">إلغاء</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ADJUSTMENT MODAL -->
+    <div id="adjustment-modal" class="fixed inset-0 bg-slate-900/80 hidden z-50 flex items-center justify-center backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-md p-8 shadow-2xl border border-slate-200 dark:border-slate-700 fade-in">
+            <h3 class="text-xl font-bold mb-6 text-slate-800 dark:text-white">إضافة حافز أو خصم</h3>
+            <form onsubmit="saveAdjustment(event)">
+                <input type="hidden" id="adj-id">
+                <div class="mb-4">
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">الموظف</label>
+                    <select id="adj-staff" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 dark:text-white" required></select>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">النوع</label>
+                    <select id="adj-type" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 dark:text-white">
+                        <option value="bonus">مكافأة (Bonus) +</option>
+                        <option value="deduction">خصم (Deduction) -</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">المبلغ</label>
+                    <input type="number" id="adj-amount" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-bold dark:text-white" required>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">السبب / ملاحظات</label>
+                    <input type="text" id="adj-reason" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 dark:text-white" placeholder="مثلاً: تأخير، عمل إضافي...">
+                </div>
+                <div class="flex gap-3">
+                    <button type="submit" class="flex-1 bg-indigo-600 text-white py-3 rounded-xl hover:bg-indigo-700 font-bold">حفظ</button>
+                    <button type="button" onclick="closeModal('adjustment-modal')" class="px-6 py-3 border rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 font-bold text-slate-600 dark:text-slate-400">إلغاء</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- CLIENT HISTORY MODAL -->
+    <div id="client-history-modal" class="fixed inset-0 bg-slate-900/80 hidden z-[70] flex items-center justify-center backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-2xl p-8 shadow-2xl border border-slate-200 dark:border-slate-700 fade-in max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">
+                <div>
+                    <h3 class="text-xl font-bold text-slate-800 dark:text-white">سجل حركات المحفظة</h3>
+                    <p id="history-client-name" class="text-sm text-slate-500 dark:text-slate-400 mt-1"></p>
+                </div>
+                <button onclick="closeModal('client-history-modal')" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-red-500 transition flex items-center justify-center"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+                <table class="w-full text-right">
+                    <thead class="bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-xs uppercase font-bold">
+                        <tr>
+                            <th class="p-4">التاريخ</th>
+                            <th class="p-4">النوع</th>
+                            <th class="p-4">المبلغ</th>
+                            <th class="p-4">التفاصيل</th>
+                        </tr>
+                    </thead>
+                    <tbody id="client-history-body" class="divide-y divide-slate-100 dark:divide-slate-700 text-sm font-medium text-slate-700 dark:text-slate-300"></tbody>
+                </table>
+            </div>
+            <div class="mt-6 text-right">
+                <button onclick="closeModal('client-history-modal')" class="px-6 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 font-bold text-slate-600 dark:text-slate-400">إغلاق</button>
+            </div>
         </div>
     </div>
 
@@ -855,6 +1287,7 @@
                         <tr>
                             <th class="p-4">المسوق</th>
                             <th class="p-4">إجمالي المبيعات</th>
+                            <th class="p-4 text-emerald-600 dark:text-emerald-400">صافي المستحق (عمولة + حوافز)</th>
                             <th class="p-4 text-blue-600 dark:text-blue-400">محصلة (من المدفوع)</th>
                             <th class="p-4 text-emerald-600 dark:text-emerald-400">تم صرفه</th>
                             <th class="p-4 text-slate-500">ملاحظات الدفع</th>
@@ -875,6 +1308,7 @@
                         <tr>
                             <th class="p-4">المصمم</th>
                             <th class="p-4">التخصص</th>
+                            <th class="p-4 text-emerald-600 dark:text-emerald-400">صافي المستحق (نسبة + حوافز)</th>
                             <th class="p-4 text-emerald-600 dark:text-emerald-400">تم صرفه (هذا الشهر)</th>
                             <th class="p-4 text-slate-500">ملاحظات الدفع</th>
                             <th class="p-4 text-center">تسجيل دفع</th>
@@ -899,18 +1333,74 @@
             staff: [],
             orders: [],
             payouts: [],
-            logs: []
+            logs: [],
+            clients: [],
+            adjustments: [],
+            settings: [{ 
+                appName: 'DM Agency', 
+                logoUrl: '', 
+                invoiceTerms: '',
+                currency: 'ج.م',
+                designerLabelS: 'مصمم',
+                designerLabelP: 'المصممين',
+                serviceTypes: ['سوشيال ميديا', 'غلاف', 'بوستر مراجعة', 'كروت شخصيه', 'صور مصغرة', 'لوجو', 'بانر', 'شهادة', 'منيو'],
+                orderSources: ['فيسبوك', 'انستجرام', 'تيك توك', 'جوجل', 'ترشيح', 'واتساب', 'أخرى']
+            }]
         };
 
-        let db = JSON.parse(localStorage.getItem('agencyDB')) || defaultData;
-        if(!db.payouts) db.payouts = []; // Ensure payouts exists for old data
-        if(!db.logs) db.logs = []; // Ensure logs exists
+        let db = { orders: [], staff: [], users: [], payouts: [], logs: [], clients: [], settings: [], adjustments: [] };
         let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
+
+        // --- HELPERS ---
+        function getCurrency() {
+            return (db.settings[0] && db.settings[0].currency) ? db.settings[0].currency : 'ج.م';
+        }
+        function getDesignerLabel(plural = false) {
+            const s = (db.settings[0] && db.settings[0].designerLabelS) ? db.settings[0].designerLabelS : 'مصمم';
+            const p = (db.settings[0] && db.settings[0].designerLabelP) ? db.settings[0].designerLabelP : 'المصممين';
+            return plural ? p : s;
+        }
+
+        // --- INIT APP ---
+        window.addEventListener('firebase-ready', async () => {
+            try {
+                const cloudData = await window.firebaseAPI.loadData();
+                // Merge with default if empty (first run)
+                if (cloudData.users.length === 0) {
+                    db = JSON.parse(JSON.stringify(defaultData));
+                    // Save default admin to cloud
+                    window.firebaseAPI.save('users', db.users[0].id, db.users[0]);
+                    window.firebaseAPI.save('settings', 'global', db.settings[0]);
+                } else {
+                    db = cloudData;
+                    // Migration for existing data (add serviceTypes if missing)
+                    if (!db.settings || db.settings.length === 0) db.settings = [JSON.parse(JSON.stringify(defaultData.settings[0]))];
+                    if (!db.settings[0].serviceTypes) {
+                        db.settings[0].serviceTypes = defaultData.settings[0].serviceTypes;
+                        window.firebaseAPI.save('settings', 'global', db.settings[0]);
+                    }
+                    if (!db.settings[0].orderSources) {
+                        db.settings[0].orderSources = defaultData.settings[0].orderSources;
+                        window.firebaseAPI.save('settings', 'global', db.settings[0]);
+                    }
+                }
+                
+                document.getElementById('loading-screen').classList.add('opacity-0');
+                setTimeout(() => document.getElementById('loading-screen').remove(), 500);
+                
+                applyAppSettings();
+                checkAuth();
+            } catch (e) {
+                console.error(e);
+            }
+        });
 
         // Chart Instances
         let statusChartInstance = null;
         let marketerChartInstance = null;
         let revenueChartInstance = null;
+        let designerChartInstance = null;
+        let sourceChartInstance = null;
 
         // Dark Mode Logic
         function toggleDarkMode() {
@@ -977,6 +1467,12 @@
 
         // --- DASHBOARD ---
         function initDashboard() {
+            // Set default month for charts
+            const now = new Date();
+            const monthStr = now.toISOString().slice(0, 7);
+            const chartFilter = document.getElementById('chart-month-filter');
+            if(chartFilter && !chartFilter.value) chartFilter.value = monthStr;
+
             renderOrders();
             renderStats();
             applyPermissions();
@@ -1017,16 +1513,26 @@
             if(tabName === 'deliveries') renderDeliveries();
             if(tabName === 'designers') renderDesigners();
             if(tabName === 'users') renderUsers();
-            if(tabName === 'settings') renderLogs();
+            if(tabName === 'settings') { renderLogs(); renderSettingsServiceTypes(); renderSettingsSources(); }
+            if(tabName === 'my-tasks') renderMyTasks();
+            if(tabName === 'profile') renderProfile();
         }
 
         function applyPermissions() {
-            const allTabs = ['orders', 'deliveries', 'collections', 'marketers', 'designers', 'users', 'settings'];
+            const allTabs = ['orders', 'deliveries', 'collections', 'marketers', 'designers', 'users', 'settings', 'clients', 'adjustments', 'my-tasks', 'profile'];
             
             if (currentUser.role === 'admin') {
                 allTabs.forEach(t => document.getElementById('nav-' + t)?.classList.remove('hidden'));
             } else {
                 const perms = currentUser.permissions || [];
+                // Auto-permissions based on role
+                if(currentUser.role === 'designer') {
+                    perms.push('my-tasks', 'profile');
+                }
+                if(currentUser.role === 'marketer') {
+                    perms.push('profile', 'orders');
+                }
+
                 allTabs.forEach(t => {
                     const el = document.getElementById('nav-' + t);
                     if(perms.includes(t)) el?.classList.remove('hidden');
@@ -1037,6 +1543,113 @@
 
         function toggleMobileMenu() {
             document.getElementById('sidebar-nav').classList.toggle('hidden');
+        }
+
+        // --- SETTINGS LOGIC ---
+        function applyAppSettings() {
+            const settings = (db.settings && db.settings.length > 0) ? db.settings[0] : defaultData.settings[0];
+            if(settings) {
+                if(settings.appName) {
+                    document.title = settings.appName;
+                    const sidebarTitle = document.getElementById('sidebar-title');
+                    const loginTitle = document.getElementById('login-title');
+                    if(sidebarTitle) sidebarTitle.innerText = settings.appName;
+                    if(loginTitle) loginTitle.innerText = settings.appName;
+                }
+                
+                // Update Sidebar & Static Texts
+                const navDesigners = document.getElementById('nav-designers');
+                if(navDesigners) navDesigners.innerHTML = `<span class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center group-hover:bg-purple-600 group-hover:text-white transition"><i class="fas fa-palette"></i></span> ${getDesignerLabel(true)}`;
+                
+                const chartTitle = document.getElementById('chart-title-designers');
+                if(chartTitle) chartTitle.innerText = `أداء ${getDesignerLabel(true)} (عدد التصاميم المكتملة)`;
+
+                // Update Inputs in Settings
+                if(document.getElementById('setting-currency')) {
+                    document.getElementById('setting-currency').value = settings.currency || 'ج.م';
+                    document.getElementById('setting-designer-label-s').value = settings.designerLabelS || 'مصمم';
+                    document.getElementById('setting-designer-label-p').value = settings.designerLabelP || 'المصممين';
+                }
+            }
+        }
+
+        function renderSettingsServiceTypes() {
+            const container = document.getElementById('settings-services-list');
+            container.innerHTML = '';
+            const types = (db.settings[0] && db.settings[0].serviceTypes) ? db.settings[0].serviceTypes : defaultData.settings[0].serviceTypes;
+            
+            types.forEach((type, index) => {
+                container.innerHTML += `
+                    <div class="bg-slate-100 dark:bg-slate-700 px-3 py-1 rounded-lg flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-200">
+                        ${type}
+                        <button onclick="deleteServiceType(${index})" class="text-red-400 hover:text-red-600"><i class="fas fa-times"></i></button>
+                    </div>
+                `;
+            });
+        }
+
+        function addServiceType() {
+            const input = document.getElementById('new-service-type');
+            const val = input.value.trim();
+            if(!val) return;
+            
+            if(!db.settings[0].serviceTypes) db.settings[0].serviceTypes = [];
+            db.settings[0].serviceTypes.push(val);
+            
+            window.firebaseAPI.save('settings', 'global', db.settings[0]);
+            input.value = '';
+            renderSettingsServiceTypes();
+            showNotification('تم إضافة نوع المشروع', 'success');
+        }
+
+        function deleteServiceType(index) {
+            if(!confirm('هل أنت متأكد من حذف هذا النوع؟')) return;
+            
+            if(db.settings[0].serviceTypes) {
+                db.settings[0].serviceTypes.splice(index, 1);
+                window.firebaseAPI.save('settings', 'global', db.settings[0]);
+                renderSettingsServiceTypes();
+            }
+        }
+
+        // --- SOURCES SETTINGS ---
+        function renderSettingsSources() {
+            const container = document.getElementById('settings-sources-list');
+            container.innerHTML = '';
+            const sources = (db.settings[0] && db.settings[0].orderSources) ? db.settings[0].orderSources : defaultData.settings[0].orderSources;
+            
+            sources.forEach((source, index) => {
+                container.innerHTML += `
+                    <div class="bg-pink-50 dark:bg-pink-900/20 border border-pink-100 dark:border-pink-900 px-3 py-1 rounded-lg flex items-center gap-2 text-sm font-bold text-pink-700 dark:text-pink-400">
+                        ${source}
+                        <button onclick="deleteSource(${index})" class="text-pink-400 hover:text-pink-600"><i class="fas fa-times"></i></button>
+                    </div>
+                `;
+            });
+        }
+
+        function addSource() {
+            const input = document.getElementById('new-source-type');
+            const val = input.value.trim();
+            if(!val) return;
+            
+            if(!db.settings[0].orderSources) db.settings[0].orderSources = [];
+            db.settings[0].orderSources.push(val);
+            
+            window.firebaseAPI.save('settings', 'global', db.settings[0]);
+            input.value = '';
+            renderSettingsSources();
+            showNotification('تم إضافة المصدر', 'success');
+        }
+
+        function deleteSource(index) {
+            if(!confirm('هل أنت متأكد من حذف هذا المصدر؟')) return;
+            
+            if(db.settings[0].orderSources) {
+                db.settings[0].orderSources.splice(index, 1);
+                window.firebaseAPI.save('settings', 'global', db.settings[0]);
+                renderSettingsSources();
+            }
         }
 
         // --- ORDERS LOGIC ---
@@ -1104,17 +1717,19 @@
                         <div>
                             <div class="font-bold text-slate-800 dark:text-slate-100">${order.client}</div>
                             <div class="text-xs text-slate-400 font-mono mt-1">${order.phone}</div>
+                            ${order.source ? `<div class="text-[10px] text-pink-500 font-bold mt-0.5"><i class="fas fa-share-alt"></i> ${order.source}</div>` : ''}
                         </div>
                     </td>
                     <td class="p-5" data-label="الخدمة">
                         <span class="bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 px-2 py-1 rounded text-xs font-bold">${order.service}</span>
                         ${order.deliveryDate ? `<div class="text-xs text-slate-500 mt-1"><i class="fas fa-calendar-alt ml-1"></i> ${order.deliveryDate}</div>` : ''}
                         ${order.designNotes ? `<div class="text-[10px] text-slate-500 mt-1 bg-slate-50 dark:bg-slate-800 p-1 rounded border border-slate-100 dark:border-slate-700 truncate max-w-[150px]" title="${order.designNotes}"><i class="fas fa-sticky-note text-yellow-500"></i> ${order.designNotes}</div>` : ''}
+                        ${order.privateNotes ? `<div class="text-[10px] text-red-500 mt-1 bg-red-50 dark:bg-red-900/20 p-1 rounded border border-red-100 dark:border-red-800 truncate max-w-[150px]" title="${order.privateNotes}"><i class="fas fa-lock"></i> ${order.privateNotes}</div>` : ''}
                         ${order.designLink ? `<a href="${order.designLink}" target="_blank" class="text-[10px] text-blue-500 hover:underline mt-1 block"><i class="fas fa-link"></i> رابط الملفات</a>` : ''}
                     </td>
                     <td class="p-5" data-label="المالية">
                         <div>
-                            <div class="font-bold text-slate-800 dark:text-slate-200">${parseFloat(order.price).toLocaleString()} ج.م</div>
+                            <div class="font-bold text-slate-800 dark:text-slate-200">${parseFloat(order.price).toLocaleString()} ${getCurrency()}</div>
                             ${(order.price - order.paid) > 0 ? `<div class="text-xs text-red-500 font-bold mt-1">مديونية: ${(order.price - order.paid)}</div>` : '<div class="text-xs text-emerald-500 font-bold mt-1">خالص</div>'}
                         </div>
                     </td>
@@ -1128,6 +1743,7 @@
                         <div class="flex justify-center gap-2">
                             <button onclick="editOrder(${order.id})" class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 hover:bg-blue-100 transition"><i class="fas fa-edit"></i></button>
                             <button onclick="printInvoice(${order.id})" class="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400 hover:bg-slate-200 transition" title="طباعة فاتورة"><i class="fas fa-print"></i></button>
+                            <button onclick="copyOrderDetails(${order.id})" class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400 hover:bg-purple-100 transition" title="نسخ التفاصيل"><i class="fas fa-copy"></i></button>
                             <button onclick="sendWhatsApp(${order.id})" class="w-8 h-8 rounded-lg bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400 hover:bg-green-100 transition" title="إرسال واتساب"><i class="fab fa-whatsapp"></i></button>
                             ${currentUser.role === 'admin' ? `<button onclick="deleteOrder(${order.id})" class="w-8 h-8 rounded-lg bg-red-50 text-red-500 dark:bg-red-900/30 dark:text-red-400 hover:bg-red-100 transition"><i class="fas fa-trash"></i></button>` : ''}
                         </div>
@@ -1146,18 +1762,60 @@
             document.getElementById('order-status').value = val;
         }
 
+        function toggleVipMode() {
+            const isVip = document.getElementById('is-vip-order').checked;
+            const selectionDiv = document.getElementById('vip-selection');
+            if(isVip) {
+                selectionDiv.classList.remove('hidden');
+                const select = document.getElementById('vip-client-select');
+                select.innerHTML = '<option value="">-- اختر العميل --</option>';
+                db.clients.forEach(c => {
+                    select.innerHTML += `<option value="${c.id}">${c.name} (رصيد: ${c.balance} ${getCurrency()})</option>`;
+                });
+            } else {
+                selectionDiv.classList.add('hidden');
+                document.getElementById('client-name').readOnly = false;
+                document.getElementById('client-phone').readOnly = false;
+            }
+        }
+
+        function selectVipClient() {
+            const clientId = document.getElementById('vip-client-select').value;
+            const client = db.clients.find(c => c.id == clientId);
+            if(client) {
+                document.getElementById('client-name').value = client.name;
+                document.getElementById('client-phone').value = client.phone;
+                document.getElementById('vip-balance-display').innerText = `الرصيد الحالي: ${client.balance} ${getCurrency()}`;
+            }
+        }
+
+        function toggleUserFields() {
+            const role = document.getElementById('new-role').value;
+            const fields = document.getElementById('user-staff-fields');
+            const specialty = document.getElementById('new-user-specialty');
+            
+            if(role === 'marketer' || role === 'designer') fields.classList.remove('hidden');
+            else fields.classList.add('hidden');
+
+            if(role === 'designer') specialty.classList.remove('hidden');
+            else specialty.classList.add('hidden');
+        }
+
         function saveOrder(e) {
             e.preventDefault();
             const id = document.getElementById('order-id').value;
+            const currentTimestamp = Date.now();
+            const orderId = id ? id : currentTimestamp; // Use existing ID or generate new one for linking
             const statusRadio = document.querySelector('input[name="status-radio"]:checked').value;
-            
-            const newOrder = {
+            let newOrder = {
                 client: document.getElementById('client-name').value,
                 phone: document.getElementById('client-phone').value,
+                source: document.getElementById('order-source').value,
                 service: document.getElementById('service-type').value,
                 deliveryDate: document.getElementById('delivery-date').value,
                 designLink: document.getElementById('design-link').value,
                 designNotes: document.getElementById('design-notes').value,
+                privateNotes: document.getElementById('private-notes').value,
                 price: parseFloat(document.getElementById('order-price').value) || 0,
                 paid: parseFloat(document.getElementById('amount-paid').value) || 0,
                 deposit: document.getElementById('deposit-paid').checked,
@@ -1165,6 +1823,37 @@
                 designerId: document.getElementById('order-designer').value,
                 status: statusRadio
             };
+
+            // VIP Logic
+            const isVip = document.getElementById('is-vip-order').checked;
+            if(isVip && !id) { // Only apply wallet deduction on new orders to avoid double deduction
+                const vipClientId = document.getElementById('vip-client-select').value;
+                const client = db.clients.find(c => c.id == vipClientId);
+                if(client) {
+                    if(client.balance < newOrder.price) {
+                        alert('رصيد العميل غير كافي!');
+                        return;
+                    }
+                    // Deduct from wallet
+                    client.balance -= newOrder.price;
+                    
+                    // Add Transaction Record
+                    if(!client.transactions) client.transactions = [];
+                    client.transactions.unshift({
+                        id: Date.now(),
+                        type: 'payment',
+                        amount: newOrder.price,
+                        date: Date.now(),
+                        details: `دفع تكلفة طلب خدمة: ${newOrder.service}`,
+                        orderId: orderId
+                    });
+
+                    newOrder.paid = newOrder.price; // Mark as fully paid
+                    newOrder.deposit = false; // Full payment
+                    window.firebaseAPI.save('clients', client.id, client); // Update client balance
+                    logActivity('خصم محفظة', `تم خصم ${newOrder.price} من محفظة العميل ${client.name}`);
+                }
+            }
 
             let dateCreated = Date.now();
             let dateAssigned = null;
@@ -1178,11 +1867,14 @@
                     dateAssigned = Date.now();
                 }
                 db.orders[index] = { ...existing, ...newOrder, dateAssigned };
+                window.firebaseAPI.save('orders', id, db.orders[index]); // Save to Cloud
                 logActivity('تعديل طلب', `تم تعديل بيانات الطلب #${id} للعميل ${newOrder.client}`);
             } else {
                 if (newOrder.designerId) dateAssigned = Date.now();
-                const newId = Date.now();
-                db.orders.push({ id: newId, ...newOrder, dateCreated, dateAssigned });
+                const newId = orderId; // Use the ID we generated above
+                const fullOrder = { id: newId, ...newOrder, dateCreated, dateAssigned };
+                db.orders.push(fullOrder);
+                window.firebaseAPI.save('orders', newId, fullOrder); // Save to Cloud
                 logActivity('إضافة طلب', `تم إضافة طلب جديد #${newId} للعميل ${newOrder.client}`);
             }
 
@@ -1200,10 +1892,12 @@
             document.getElementById('order-id').value = order.id;
             document.getElementById('client-name').value = order.client;
             document.getElementById('client-phone').value = order.phone;
+            document.getElementById('order-source').value = order.source || '';
             document.getElementById('service-type').value = order.service;
             document.getElementById('delivery-date').value = order.deliveryDate || '';
             document.getElementById('design-link').value = order.designLink || '';
             document.getElementById('design-notes').value = order.designNotes || '';
+            document.getElementById('private-notes').value = order.privateNotes || '';
             document.getElementById('order-price').value = order.price;
             document.getElementById('amount-paid').value = order.paid;
             document.getElementById('deposit-paid').checked = order.deposit;
@@ -1224,6 +1918,7 @@
             if(confirm('حذف هذا الطلب؟')) {
                 const order = db.orders.find(o => o.id == id);
                 db.orders = db.orders.filter(o => o.id != id);
+                window.firebaseAPI.delete('orders', id); // Delete from Cloud
                 saveDB(); renderOrders();
                 logActivity('حذف طلب', `تم حذف الطلب #${id} للعميل ${order ? order.client : 'غير معروف'}`);
                 showNotification('تم الحذف', 'warning');
@@ -1255,7 +1950,7 @@
                 const paid = parseFloat(document.getElementById('amount-paid').value) || 0;
                 const totalComm = (price * parseFloat(marketer.commission)) / 100;
                 const currentComm = (paid * parseFloat(marketer.commission)) / 100;
-                displayEl.innerHTML = `<i class="fas fa-coins ml-1"></i> عمولة حالية (من العربون/المدفوع): ${currentComm.toLocaleString()} ج.م <span class="text-slate-400">| الكلية: ${totalComm.toLocaleString()}</span>`;
+                displayEl.innerHTML = `<i class="fas fa-coins ml-1"></i> عمولة حالية (من العربون/المدفوع): ${currentComm.toLocaleString()} ${getCurrency()} <span class="text-slate-400">| الكلية: ${totalComm.toLocaleString()}</span>`;
                 displayEl.classList.remove('hidden');
             } else {
                 displayEl.classList.add('hidden');
@@ -1312,7 +2007,7 @@
                     </td>
                     <td class="p-5 font-bold">${order.client}</td>
                     <td class="p-5"><span class="bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded text-xs">${order.service}</span></td>
-                    <td class="p-5 ${remaining > 0 ? 'text-red-500 font-bold' : 'text-emerald-500'}">${remaining > 0 ? remaining.toLocaleString() + ' ج.م' : 'خالص'}</td>
+                    <td class="p-5 ${remaining > 0 ? 'text-red-500 font-bold' : 'text-emerald-500'}">${remaining > 0 ? remaining.toLocaleString() + ' ' + getCurrency() : 'خالص'}</td>
                     <td class="p-5 text-sm">${designer}</td>
                     <td class="p-5">
                         <span class="px-2 py-1 rounded text-xs font-bold ${order.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : (order.status === 'done' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700')}">
@@ -1370,9 +2065,9 @@
                     <td class="p-5 font-mono text-slate-500">#${order.id}</td>
                     <td class="p-5 font-bold text-slate-800 dark:text-slate-200">${order.client}</td>
                     <td class="p-5"><span class="bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded text-xs">${order.service}</span></td>
-                    <td class="p-5 font-bold">${parseFloat(order.price).toLocaleString()} ج.م</td>
-                    <td class="p-5 text-emerald-600 font-bold">${parseFloat(order.paid).toLocaleString()} ج.م</td>
-                    <td class="p-5 font-bold ${remaining > 0 ? 'text-red-500' : 'text-slate-400'}">${remaining > 0 ? remaining.toLocaleString() + ' ج.م' : '-'}</td>
+                    <td class="p-5 font-bold">${parseFloat(order.price).toLocaleString()} ${getCurrency()}</td>
+                    <td class="p-5 text-emerald-600 font-bold">${parseFloat(order.paid).toLocaleString()} ${getCurrency()}</td>
+                    <td class="p-5 font-bold ${remaining > 0 ? 'text-red-500' : 'text-slate-400'}">${remaining > 0 ? remaining.toLocaleString() + ' ' + getCurrency() : '-'}</td>
                     <td class="p-5 font-bold ${statusColor}">${statusText}</td>
                 `;
                 tbody.appendChild(tr);
@@ -1381,9 +2076,9 @@
             tfoot.innerHTML = `
                 <tr>
                     <td colspan="3" class="p-5 text-left">الإجماليات</td>
-                    <td class="p-5">${totalPrices.toLocaleString()} ج.م</td>
-                    <td class="p-5 text-emerald-600">${totalPaid.toLocaleString()} ج.م</td>
-                    <td class="p-5 text-red-500">${totalDebt.toLocaleString()} ج.م</td>
+                    <td class="p-5">${totalPrices.toLocaleString()} ${getCurrency()}</td>
+                    <td class="p-5 text-emerald-600">${totalPaid.toLocaleString()} ${getCurrency()}</td>
+                    <td class="p-5 text-red-500">${totalDebt.toLocaleString()} ${getCurrency()}</td>
                     <td></td>
                 </tr>
             `;
@@ -1392,12 +2087,23 @@
         // --- DESIGNERS ---
         function renderDesigners() {
             const container = document.getElementById('designers-grid');
+            
+            // Update Header Buttons/Inputs dynamically
+            const addBtn = document.querySelector('#tab-designers button');
+            if(addBtn) addBtn.innerHTML = `<i class="fas fa-plus"></i> إضافة ${getDesignerLabel()}`;
+            const searchInp = document.getElementById('search-designers');
+            if(searchInp) searchInp.placeholder = `بحث عن ${getDesignerLabel()}...`;
+
             container.innerHTML = '';
             const search = document.getElementById('search-designers').value.toLowerCase();
             
             db.staff.filter(s => s.type === 'designer' && (s.name.toLowerCase().includes(search) || s.specialty.toLowerCase().includes(search))).forEach(d => {
                 const activeTasks = db.orders.filter(o => o.designerId == d.id && (o.status === 'pending' || o.status === 'review'));
                 const completedTasks = db.orders.filter(o => o.designerId == d.id && o.status === 'done');
+                
+                // Calculate Earnings
+                const totalCompletedPrice = completedTasks.reduce((sum, o) => sum + parseFloat(o.price), 0);
+                const earnings = (totalCompletedPrice * (parseFloat(d.commission) || 0)) / 100;
 
                 let tasksHtml = '';
                 if(activeTasks.length > 0) {
@@ -1441,6 +2147,7 @@
                             <div>
                                 <h3 class="font-bold text-lg text-slate-800 dark:text-white">${d.name}</h3>
                                 <p class="text-purple-600 dark:text-purple-400 text-sm">${d.specialty}</p>
+                                <p class="text-xs text-slate-500 mt-1">نسبة: ${d.commission || 0}% | أرباح: ${earnings.toLocaleString()} ${getCurrency()}</p>
                             </div>
                         </div>
                         <div class="flex gap-2">
@@ -1489,15 +2196,15 @@
                         </div>
                         <div class="flex justify-between p-3 bg-slate-50 dark:bg-slate-700 rounded-xl">
                             <span class="text-slate-500 dark:text-slate-400 text-sm">المبيعات</span>
-                            <span class="font-bold text-slate-800 dark:text-white">${totalSales.toLocaleString()} ج.م</span>
+                            <span class="font-bold text-slate-800 dark:text-white">${totalSales.toLocaleString()} ${getCurrency()}</span>
                         </div>
                         <div class="flex justify-between p-3 bg-slate-50 dark:bg-slate-700 rounded-xl">
                             <span class="text-slate-500 dark:text-slate-400 text-sm">التحصيلات (عربون/كامل)</span>
-                            <span class="font-bold text-emerald-600 dark:text-emerald-400">${totalPaid.toLocaleString()} ج.م</span>
+                            <span class="font-bold text-emerald-600 dark:text-emerald-400">${totalPaid.toLocaleString()} ${getCurrency()}</span>
                         </div>
                         <div class="flex justify-between items-center p-4 bg-emerald-600 text-white rounded-xl shadow-lg mt-2">
                             <span class="font-bold text-emerald-100">العمولة</span>
-                            <span class="font-bold text-xl">${commissionVal.toLocaleString()} ج.م</span>
+                            <span class="font-bold text-xl">${commissionVal.toLocaleString()} ${getCurrency()}</span>
                         </div>
                     </div>
                     <div class="absolute top-4 left-4 flex gap-2">
@@ -1507,6 +2214,65 @@
                 `;
                 container.appendChild(card);
             });
+        }
+
+        // --- ADJUSTMENTS LOGIC ---
+        function renderAdjustments() {
+            const tbody = document.getElementById('adjustments-table-body');
+            tbody.innerHTML = '';
+            const search = document.getElementById('search-adjustments').value.toLowerCase();
+            
+            const list = (db.adjustments || []).sort((a,b) => b.date - a.date);
+            
+            list.forEach(adj => {
+                const staff = db.staff.find(s => s.id == adj.staffId);
+                if(staff && staff.name.toLowerCase().includes(search)) {
+                    const isBonus = adj.type === 'bonus';
+                    tbody.innerHTML += `
+                        <tr class="border-b border-slate-50 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800">
+                            <td class="p-4 text-slate-500 text-xs font-mono">${new Date(adj.date).toLocaleDateString('ar-EG')}</td>
+                            <td class="p-4 font-bold text-slate-800 dark:text-white">${staff.name}</td>
+                            <td class="p-4"><span class="px-2 py-1 rounded text-xs font-bold ${isBonus ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}">${isBonus ? 'مكافأة' : 'خصم'}</span></td>
+                            <td class="p-4 font-bold ${isBonus ? 'text-emerald-600' : 'text-red-600'}">${parseFloat(adj.amount).toLocaleString()} ${getCurrency()}</td>
+                            <td class="p-4 text-slate-600 dark:text-slate-300 text-sm">${adj.reason}</td>
+                            <td class="p-4 text-center">
+                                <button onclick="deleteAdjustment(${adj.id})" class="text-red-400 hover:text-red-600 transition"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
+                    `;
+                }
+            });
+            if(tbody.innerHTML === '') tbody.innerHTML = '<tr><td colspan="6" class="p-6 text-center text-slate-400">لا توجد بيانات</td></tr>';
+        }
+
+        function saveAdjustment(e) {
+            e.preventDefault();
+            const staffId = document.getElementById('adj-staff').value;
+            const type = document.getElementById('adj-type').value;
+            const amount = parseFloat(document.getElementById('adj-amount').value);
+            const reason = document.getElementById('adj-reason').value;
+            
+            const newAdj = {
+                id: Date.now(),
+                staffId,
+                type,
+                amount,
+                reason,
+                date: Date.now()
+            };
+            
+            if(!db.adjustments) db.adjustments = [];
+            db.adjustments.push(newAdj);
+            window.firebaseAPI.save('adjustments', newAdj.id, newAdj);
+            saveDB(); closeModal('adjustment-modal'); renderAdjustments();
+        }
+
+        function deleteAdjustment(id) {
+            if(confirm('حذف هذا السجل؟')) {
+                db.adjustments = db.adjustments.filter(a => a.id != id);
+                window.firebaseAPI.delete('adjustments', id);
+                saveDB(); renderAdjustments();
+            }
         }
 
         // --- BACKUP & RESTORE ---
@@ -1547,6 +2313,7 @@
                     db.users[userIdx].password = newPass;
                     currentUser.password = newPass;
                     localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    window.firebaseAPI.save('users', currentUser.id, db.users[userIdx]); // Save to Cloud
                     saveDB();
                     showNotification('تم تغيير كلمة المرور بنجاح', 'success');
                     document.getElementById('new-system-password').value = '';
@@ -1557,6 +2324,13 @@
         function resetSystem() {
             if(confirm('هل أنت متأكد تماماً؟ سيتم حذف جميع الطلبات والمدفوعات لبدء موسم جديد! لا يمكن التراجع عن هذا الإجراء.')) {
                 if(confirm('تأكيد نهائي: هل تريد تصفير النظام؟')) {
+                    // Delete from Cloud
+                    const orderIds = db.orders.map(o => o.id);
+                    const payoutIds = db.payouts.map(p => p.id);
+                    window.firebaseAPI.clearCollection('orders', orderIds);
+                    window.firebaseAPI.clearCollection('payouts', payoutIds);
+                    // Note: Adjustments are not cleared here by default, but can be added if needed
+                    
                     db.orders = [];
                     db.payouts = [];
                     saveDB();
@@ -1569,13 +2343,15 @@
         function logActivity(action, details) {
             if(!db.logs) db.logs = [];
             const user = currentUser ? currentUser.username : 'System';
-            db.logs.unshift({
+            const logEntry = {
                 id: Date.now(),
                 user,
                 action,
                 details,
                 timestamp: Date.now()
-            });
+            };
+            db.logs.unshift(logEntry);
+            window.firebaseAPI.save('logs', logEntry.id, logEntry); // Save to Cloud
             // Keep only last 1000 logs to prevent storage bloat
             if(db.logs.length > 1000) db.logs = db.logs.slice(0, 1000);
             // Note: saveDB() is usually called after this in the parent function
@@ -1612,7 +2388,7 @@
 
         // --- UTILS ---
         function saveDB() {
-            localStorage.setItem('agencyDB', JSON.stringify(db));
+            // localStorage.setItem('agencyDB', JSON.stringify(db)); // Disabled in favor of Firebase
             renderStats();
         }
 
@@ -1626,6 +2402,7 @@
             if(type === 'marketer') extraData.commission = document.getElementById('staff-commission').value;
             else {
                 extraData.specialty = document.getElementById('staff-specialty').value;
+                extraData.commission = document.getElementById('staff-designer-commission').value;
                 extraData.wallet = document.getElementById('staff-wallet').value;
             }
             
@@ -1633,9 +2410,12 @@
                 const index = db.staff.findIndex(s => s.id == id);
                 if (index !== -1) {
                     db.staff[index] = { ...db.staff[index], name, phone, ...extraData };
+                    window.firebaseAPI.save('staff', id, db.staff[index]); // Save to Cloud
                 }
             } else {
-                db.staff.push({ id: Date.now(), name, type, phone, ...extraData });
+                const newStaff = { id: Date.now(), name, type, phone, ...extraData };
+                db.staff.push(newStaff);
+                window.firebaseAPI.save('staff', newStaff.id, newStaff); // Save to Cloud
             }
             
             saveDB(); closeModal('staff-modal');
@@ -1657,6 +2437,7 @@
                 document.getElementById('staff-commission').value = staff.commission;
             } else {
                 document.getElementById('staff-specialty').value = staff.specialty;
+                document.getElementById('staff-designer-commission').value = staff.commission || '';
                 document.getElementById('staff-wallet').value = staff.wallet;
             }
         }
@@ -1664,6 +2445,7 @@
         function deleteStaff(id) {
             if(confirm('حذف الموظف؟')) {
                 db.staff = db.staff.filter(s => s.id != id);
+                window.firebaseAPI.delete('staff', id); // Delete from Cloud
                 saveDB();
                 if(!document.getElementById('tab-marketers').classList.contains('hidden-section')) renderMarketers();
                 if(!document.getElementById('tab-designers').classList.contains('hidden-section')) renderDesigners();
@@ -1696,12 +2478,38 @@
                         permissions: perms,
                         password: p ? p : existing.password // Update password only if provided
                     };
+                    window.firebaseAPI.save('users', id, db.users[index]); // Save to Cloud
                 }
             } else {
                 // Add Mode
                 if(db.users.find(usr => usr.username === u)) { showNotification('المستخدم موجود', 'error'); return; }
                 if(!p) { showNotification('كلمة المرور مطلوبة', 'error'); return; }
-                db.users.push({ id: Date.now(), username: u, password: p, role: r, permissions: perms });
+                
+                let staffId = null;
+                // If Marketer or Designer, create Staff entry first
+                if(r === 'marketer' || r === 'designer') {
+                    const sName = document.getElementById('new-user-realname').value || u;
+                    const sPhone = document.getElementById('new-user-phone').value || '';
+                    const sComm = document.getElementById('new-user-commission').value || 0;
+                    const sSpec = document.getElementById('new-user-specialty').value || '';
+                    
+                    const newStaff = { 
+                        id: Date.now(), 
+                        name: sName, 
+                        type: r, 
+                        phone: sPhone, 
+                        commission: sComm, 
+                        specialty: sSpec,
+                        wallet: 0
+                    };
+                    db.staff.push(newStaff);
+                    window.firebaseAPI.save('staff', newStaff.id, newStaff);
+                    staffId = newStaff.id;
+                }
+
+                const newUser = { id: Date.now(), username: u, password: p, role: r, permissions: perms, staffId: staffId };
+                db.users.push(newUser);
+                window.firebaseAPI.save('users', newUser.id, newUser); // Save to Cloud
             }
 
             saveDB(); closeModal('user-modal'); renderUsers();
@@ -1747,6 +2555,9 @@
             document.querySelectorAll('.perm-checkbox').forEach(cb => {
                 cb.checked = perms.includes(cb.value);
             });
+            
+            // Hide staff fields on edit for simplicity (or could implement editing linked staff)
+            document.getElementById('user-staff-fields').classList.add('hidden');
 
             openModal('user-modal');
         }
@@ -1754,24 +2565,249 @@
         function deleteUser(id) {
             if(confirm('حذف المستخدم؟')) {
                 db.users = db.users.filter(u => u.id != id);
+                window.firebaseAPI.delete('users', id); // Delete from Cloud
                 saveDB(); renderUsers();
                 logActivity('حذف مستخدم', `تم حذف المستخدم ID: ${id}`);
             }
         }
 
+        // --- CLIENTS (VIP) LOGIC ---
+        function renderClients() {
+            const tbody = document.getElementById('clients-table-body');
+            tbody.innerHTML = '';
+            const search = document.getElementById('search-clients').value.toLowerCase();
+            
+            (db.clients || []).filter(c => c.name.toLowerCase().includes(search)).forEach(c => {
+                tbody.innerHTML += `
+                    <tr class="border-b border-slate-50 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800">
+                        <td class="p-4 font-bold text-slate-800 dark:text-white">${c.name}</td>
+                        <td class="p-4 text-slate-500">${c.phone}</td>
+                        <td class="p-4 font-bold text-orange-600 dark:text-orange-400">${parseFloat(c.balance).toLocaleString()} ${getCurrency()}</td>
+                        <td class="p-4 text-center flex justify-center gap-2">
+                            <button onclick="openTopUpModal(${c.id})" class="bg-emerald-100 text-emerald-600 px-3 py-1 rounded-lg text-xs font-bold hover:bg-emerald-200 transition"><i class="fas fa-plus"></i> شحن</button>
+                            <button onclick="openHistoryModal(${c.id})" class="bg-slate-100 text-slate-600 px-3 py-1 rounded-lg text-xs font-bold hover:bg-slate-200 transition"><i class="fas fa-history"></i> سجل</button>
+                            <button onclick="printClientStatement(${c.id})" class="text-slate-400 hover:text-slate-600 transition" title="طباعة كشف حساب"><i class="fas fa-print"></i></button>
+                            <button onclick="editClient(${c.id})" class="text-blue-400 hover:text-blue-600"><i class="fas fa-edit"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function saveClient(e) {
+            e.preventDefault();
+            const id = document.getElementById('client-id').value;
+            const name = document.getElementById('client-modal-name').value;
+            const phone = document.getElementById('client-modal-phone').value;
+            const balance = parseFloat(document.getElementById('client-modal-balance').value) || 0;
+
+            if(id) {
+                const idx = db.clients.findIndex(c => c.id == id);
+                if(idx !== -1) {
+                    db.clients[idx] = { ...db.clients[idx], name, phone, balance }; // Usually balance isn't edited here directly but for admin power
+                    window.firebaseAPI.save('clients', id, db.clients[idx]);
+                }
+            } else {
+                const newClient = { id: Date.now(), name, phone, balance };
+                db.clients.push(newClient);
+                window.firebaseAPI.save('clients', newClient.id, newClient);
+            }
+            saveDB(); closeModal('client-modal'); renderClients();
+        }
+
+        function editClient(id) {
+            const c = db.clients.find(x => x.id == id);
+            if(!c) return;
+            document.getElementById('client-id').value = c.id;
+            document.getElementById('client-modal-name').value = c.name;
+            document.getElementById('client-modal-phone').value = c.phone;
+            document.getElementById('client-modal-balance').value = c.balance;
+            document.getElementById('client-modal-title').innerText = "تعديل بيانات العميل";
+            openModal('client-modal');
+        }
+
+        function openTopUpModal(id) {
+            const c = db.clients.find(x => x.id == id);
+            if(!c) return;
+            document.getElementById('topup-client-id').value = c.id;
+            document.getElementById('topup-client-name').innerText = c.name;
+            document.getElementById('topup-amount').value = '';
+            openModal('topup-modal');
+        }
+
+        function openHistoryModal(id) {
+            const c = db.clients.find(x => x.id == id);
+            if(!c) return;
+            
+            document.getElementById('history-client-name').innerText = c.name;
+            const tbody = document.getElementById('client-history-body');
+            tbody.innerHTML = '';
+            
+            const transactions = c.transactions || [];
+            if(transactions.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-slate-400">لا توجد حركات مسجلة</td></tr>';
+            } else {
+                transactions.forEach(t => {
+                    const date = new Date(t.date).toLocaleString('ar-EG');
+                    let typeBadge = '';
+                    if(t.type === 'deposit') typeBadge = '<span class="text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded text-xs font-bold">إيداع (شحن)</span>';
+                    else typeBadge = '<span class="text-red-600 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded text-xs font-bold">خصم (دفع)</span>';
+                    
+                    tbody.innerHTML += `
+                        <tr class="border-b border-slate-50 dark:border-slate-800 last:border-0">
+                            <td class="p-4 text-slate-500 font-mono text-xs">${date}</td>
+                            <td class="p-4">${typeBadge}</td>
+                            <td class="p-4 font-bold ${t.type === 'deposit' ? 'text-emerald-600' : 'text-red-600'}">${parseFloat(t.amount).toLocaleString()} ${getCurrency()}</td>
+                            <td class="p-4 text-slate-600 dark:text-slate-300 text-xs">${t.details}</td>
+                        </tr>
+                    `;
+                });
+            }
+            document.getElementById('client-history-modal').classList.remove('hidden');
+        }
+
+        function printClientStatement(id) {
+            const client = db.clients.find(c => c.id == id);
+            if(!client) return;
+            const settings = (db.settings && db.settings.length > 0) ? db.settings[0] : { appName: 'DM Agency', logoUrl: 'https://via.placeholder.com/150x80?text=LOGO' };
+            
+            const printWindow = window.open('', '_blank');
+            
+            let rows = '';
+            const transactions = client.transactions || [];
+            if(transactions.length === 0) {
+                rows = '<tr><td colspan="4" style="text-align:center; padding: 20px; color: #777;">لا توجد حركات مسجلة</td></tr>';
+            } else {
+                transactions.forEach(t => {
+                    const date = new Date(t.date).toLocaleDateString('ar-EG');
+                    const typeText = t.type === 'deposit' ? 'إيداع (شحن)' : 'خصم (دفع)';
+                    const color = t.type === 'deposit' ? '#10b981' : '#ef4444';
+                    rows += `
+                        <tr>
+                            <td>${date}</td>
+                            <td style="color: ${color}; font-weight: bold;">${typeText}</td>
+                            <td>${parseFloat(t.amount).toLocaleString()} ${getCurrency()}</td>
+                            <td>${t.details}</td>
+                        </tr>
+                    `;
+                });
+            }
+
+            printWindow.document.write(`
+                <html dir="rtl">
+                <head>
+                    <title>كشف حساب - ${client.name}</title>
+                    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+                    <style>
+                        body { font-family: 'Tajawal', sans-serif; background-color: white; padding: 40px; color: #333; }
+                        .header { text-align: center; margin-bottom: 40px; border-bottom: 2px solid #f3f4f6; padding-bottom: 20px; }
+                        .header img { max-height: 80px; margin-bottom: 10px; }
+                        .header h1 { margin: 0; font-size: 24px; color: #1e293b; }
+                        .header p { margin: 5px 0; color: #64748b; }
+                        .client-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
+                        .client-box h3 { margin: 0 0 10px 0; font-size: 18px; color: #0f172a; }
+                        .client-box p { margin: 5px 0; font-size: 14px; }
+                        .balance-box { text-align: left; }
+                        .balance-amount { font-size: 24px; font-weight: bold; color: #ea580c; }
+                        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+                        th { background-color: #f1f5f9; color: #475569; font-weight: bold; padding: 12px; text-align: right; border-bottom: 2px solid #e2e8f0; }
+                        td { padding: 12px; border-bottom: 1px solid #e2e8f0; color: #334155; }
+                        tr:last-child td { border-bottom: none; }
+                        .footer { margin-top: 50px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px dashed #cbd5e1; padding-top: 20px; }
+                        @media print { body { padding: 0; } th { background-color: #eee !important; -webkit-print-color-adjust: exact; } }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <img src="${settings.logoUrl || 'https://via.placeholder.com/150x80?text=LOGO'}" alt="Logo">
+                        <h1>كشف حساب عميل</h1>
+                        <p>${settings.appName || 'DM Agency'}</p>
+                    </div>
+                    <div class="client-box">
+                        <div>
+                            <h3>${client.name}</h3>
+                            <p>رقم الهاتف: ${client.phone}</p>
+                            <p>تاريخ الاستخراج: ${new Date().toLocaleDateString('ar-EG')}</p>
+                        </div>
+                        <div class="balance-box">
+                            <p>الرصيد الحالي</p>
+                            <div class="balance-amount">${parseFloat(client.balance).toLocaleString()} ${getCurrency()}</div>
+                        </div>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>التاريخ</th>
+                                <th>نوع الحركة</th>
+                                <th>المبلغ</th>
+                                <th>التفاصيل</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                    <div class="footer"><p>تم استخراج هذا الكشف آلياً من النظام.</p></div>
+                    <script>window.onload = function() { window.print(); }<\/script>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+        }
+
+        function saveTopUp(e) {
+            e.preventDefault();
+            const id = document.getElementById('topup-client-id').value;
+            const amount = parseFloat(document.getElementById('topup-amount').value);
+            const c = db.clients.find(x => x.id == id);
+            if(c) {
+                c.balance += amount;
+                
+                // Add Transaction Record
+                if(!c.transactions) c.transactions = [];
+                c.transactions.unshift({
+                    id: Date.now(),
+                    type: 'deposit',
+                    amount: amount,
+                    date: Date.now(),
+                    details: 'شحن رصيد مباشر'
+                });
+
+                window.firebaseAPI.save('clients', c.id, c);
+                logActivity('شحن محفظة', `تم شحن ${amount} لمحفظة العميل ${c.name}`);
+                saveDB(); closeModal('topup-modal'); renderClients();
+                showNotification('تم الشحن بنجاح', 'success');
+            }
+        }
+
+        function saveAppSettings(e) {
+            e.preventDefault();
+            const settings = {
+                appName: document.getElementById('setting-app-name').value,
+                logoUrl: document.getElementById('setting-logo-url').value,
+                invoiceTerms: document.getElementById('setting-invoice-terms').value,
+                currency: document.getElementById('setting-currency').value,
+                designerLabelS: document.getElementById('setting-designer-label-s').value,
+                designerLabelP: document.getElementById('setting-designer-label-p').value
+            };
+            
+            db.settings = [settings];
+            window.firebaseAPI.save('settings', 'global', settings);
+            applyAppSettings();
+            showNotification('تم حفظ الإعدادات', 'success');
+        }
+
         function renderStats() {
             document.getElementById('stat-total-orders').innerText = db.orders.length;
             const revenue = db.orders.filter(o => o.status !== 'rejected').reduce((sum, o) => sum + (parseFloat(o.paid) || 0), 0);
-            document.getElementById('stat-revenue').innerText = revenue.toLocaleString() + ' ج.م';
+            document.getElementById('stat-revenue').innerText = revenue.toLocaleString() + ' ' + getCurrency();
             
             // Debt Logic
             const debt = db.orders.filter(o => o.status !== 'rejected').reduce((sum, o) => sum + (parseFloat(o.price) - parseFloat(o.paid)), 0);
-            document.getElementById('stat-debt').innerText = debt.toLocaleString() + ' ج.م';
+            document.getElementById('stat-debt').innerText = debt.toLocaleString() + ' ' + getCurrency();
             
             // Net Profit Logic
             const totalPayouts = db.payouts.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
             const netProfit = revenue - totalPayouts;
-            document.getElementById('stat-net-profit').innerText = netProfit.toLocaleString() + ' ج.م';
+            document.getElementById('stat-net-profit').innerText = netProfit.toLocaleString() + ' ' + getCurrency();
 
             // Today's Orders Badge
             const todayStr = new Date().toDateString();
@@ -1796,33 +2832,67 @@
             const ctxStatus = document.getElementById('statusChart').getContext('2d');
             const ctxMarketer = document.getElementById('marketerChart').getContext('2d');
             const ctxRevenue = document.getElementById('revenueChart').getContext('2d');
+            const ctxDesigner = document.getElementById('designerChart').getContext('2d');
+            const ctxSource = document.getElementById('sourceChart').getContext('2d');
             
+            // Get Filter
+            const filterEl = document.getElementById('chart-month-filter');
+            let year, month;
+            if (filterEl && filterEl.value) {
+                [year, month] = filterEl.value.split('-').map(Number);
+            } else {
+                const now = new Date();
+                year = now.getFullYear();
+                month = now.getMonth() + 1;
+            }
+
+            // Filter Orders
+            const filteredOrders = db.orders.filter(o => {
+                const d = new Date(o.dateCreated);
+                return d.getFullYear() === year && (d.getMonth() + 1) === month;
+            });
+
             // Prepare Data
             const statusCounts = { pending: 0, review: 0, done: 0, rejected: 0 };
-            db.orders.forEach(o => { if(statusCounts[o.status] !== undefined) statusCounts[o.status]++; });
+            filteredOrders.forEach(o => { if(statusCounts[o.status] !== undefined) statusCounts[o.status]++; });
 
             const marketerSales = {};
             db.staff.filter(s => s.type === 'marketer').forEach(m => marketerSales[m.name] = 0);
-            db.orders.forEach(o => {
+            filteredOrders.forEach(o => {
                 if(o.status !== 'rejected' && o.marketerId) {
                     const m = db.staff.find(s => s.id == o.marketerId);
                     if(m) marketerSales[m.name] = (marketerSales[m.name] || 0) + parseFloat(o.price);
                 }
             });
 
-            // Revenue Data (Last 7 Days)
-            const last7Days = [];
+            // Designer Data
+            const designerCounts = {};
+            db.staff.filter(s => s.type === 'designer').forEach(d => designerCounts[d.name] = 0);
+            
+            filteredOrders.forEach(o => {
+                if(o.status === 'done' && o.designerId) {
+                    const designer = db.staff.find(s => s.id == o.designerId);
+                    if(designer) designerCounts[designer.name] = (designerCounts[designer.name] || 0) + 1;
+                }
+            });
+
+            // Source Data
+            const sourceCounts = {};
+            filteredOrders.forEach(o => {
+                const src = o.source || 'غير محدد';
+                sourceCounts[src] = (sourceCounts[src] || 0) + 1;
+            });
+
+            // Revenue Data (Daily for selected month)
+            const daysInMonth = new Date(year, month, 0).getDate();
+            const revenueLabels = [];
             const revenueData = [];
-            for (let i = 6; i >= 0; i--) {
-                const d = new Date();
-                d.setDate(d.getDate() - i);
-                last7Days.push(d.toLocaleDateString('ar-EG', { weekday: 'short', day: 'numeric' }));
-                
-                const startOfDay = new Date(d.setHours(0,0,0,0)).getTime();
-                const endOfDay = new Date(d.setHours(23,59,59,999)).getTime();
-                
-                const dayRevenue = db.orders.reduce((sum, o) => {
-                    if(o.status !== 'rejected' && o.dateCreated >= startOfDay && o.dateCreated <= endOfDay) {
+            
+            for (let i = 1; i <= daysInMonth; i++) {
+                revenueLabels.push(i);
+                const dayRevenue = filteredOrders.reduce((sum, o) => {
+                    const d = new Date(o.dateCreated);
+                    if(o.status !== 'rejected' && d.getDate() === i) {
                         return sum + (parseFloat(o.paid) || 0);
                     }
                     return sum;
@@ -1852,7 +2922,7 @@
                 data: {
                     labels: Object.keys(marketerSales),
                     datasets: [{
-                        label: 'المبيعات (ج.م)',
+                        label: `المبيعات (${getCurrency()})`,
                         data: Object.values(marketerSales),
                         backgroundColor: '#6366f1',
                         borderRadius: 5
@@ -1871,9 +2941,9 @@
             revenueChartInstance = new Chart(ctxRevenue, {
                 type: 'line',
                 data: {
-                    labels: last7Days,
+                    labels: revenueLabels,
                     datasets: [{
-                        label: 'الإيرادات (ج.م)',
+                        label: `الإيرادات (${getCurrency()})`,
                         data: revenueData,
                         borderColor: '#10b981',
                         backgroundColor: 'rgba(16, 185, 129, 0.1)',
@@ -1891,11 +2961,52 @@
                     plugins: { legend: { display: false }, tooltip: { bodyFont: { family: 'Tajawal' } } }
                 }
             });
+
+            // Designer Chart
+            if(designerChartInstance) designerChartInstance.destroy();
+            designerChartInstance = new Chart(ctxDesigner, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(designerCounts),
+                    datasets: [{
+                        label: 'تصاميم مكتملة',
+                        data: Object.values(designerCounts),
+                        backgroundColor: '#8b5cf6',
+                        borderRadius: 5
+                    }]
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
+                    plugins: { legend: { display: false }, tooltip: { bodyFont: { family: 'Tajawal' } } }
+                }
+            });
+
+            // Source Chart
+            if(sourceChartInstance) sourceChartInstance.destroy();
+            sourceChartInstance = new Chart(ctxSource, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(sourceCounts),
+                    datasets: [{
+                        data: Object.values(sourceCounts),
+                        backgroundColor: ['#ec4899', '#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#6366f1', '#14b8a6'],
+                        borderWidth: 0
+                    }]
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { position: 'right', labels: { font: { family: 'Tajawal' } } }, tooltip: { bodyFont: { family: 'Tajawal' } } }
+                }
+            });
         }
 
         function printInvoice(id) {
             const order = db.orders.find(o => o.id == id);
             if(!order) return;
+            const settings = (db.settings && db.settings.length > 0) ? db.settings[0] : { appName: 'DM Agency', logoUrl: 'https://via.placeholder.com/150x80?text=LOGO', invoiceTerms: '1. العربون المدفوع لا يسترد.\n2. التسليم بعد سداد كامل المبلغ.' };
             
             const printWindow = window.open('', '_blank');
             printWindow.document.write(`
@@ -1932,8 +3043,8 @@
                 <body>
                     <div class="invoice-box">
                         <div class="header">
-                            <img src="https://via.placeholder.com/150x80?text=LOGO" alt="Logo">
-                            <h1>فاتورة طلب خدمة</h1>
+                            <img src="${settings.logoUrl || 'https://via.placeholder.com/150x80?text=LOGO'}" alt="Logo">
+                            <h1>${settings.appName || 'فاتورة طلب خدمة'}</h1>
                             <p>رقم المرجع: #${order.id}</p>
                             <p>تاريخ الطباعة: ${new Date().toLocaleDateString('ar-EG')}</p>
                         </div>
@@ -1946,16 +3057,14 @@
                         </table>
 
                         <div class="total-section">
-                            <div class="row"><span>الإجمالي:</span> <span>${parseFloat(order.price).toLocaleString()} ج.م</span></div>
-                            <div class="row"><span>المدفوع:</span> <span>${parseFloat(order.paid).toLocaleString()} ج.م</span></div>
-                            <div class="row final" style="color: ${(order.price - order.paid) > 0 ? '#dc2626' : '#16a34a'}"><span>المتبقي:</span> <span>${(order.price - order.paid).toLocaleString()} ج.م</span></div>
+                            <div class="row"><span>الإجمالي:</span> <span>${parseFloat(order.price).toLocaleString()} ${getCurrency()}</span></div>
+                            <div class="row"><span>المدفوع:</span> <span>${parseFloat(order.paid).toLocaleString()} ${getCurrency()}</span></div>
+                            <div class="row final" style="color: ${(order.price - order.paid) > 0 ? '#dc2626' : '#16a34a'}"><span>المتبقي:</span> <span>${(order.price - order.paid).toLocaleString()} ${getCurrency()}</span></div>
                         </div>
 
                         <div class="footer">
                             <h4>الشروط والأحكام</h4>
-                            <p>1. العربون المدفوع لا يسترد في حالة بدء العمل.</p>
-                            <p>2. يتم تسليم الملفات النهائية (Source Files) بعد سداد كامل المبلغ المتبقي.</p>
-                            <p>3. التعديلات المجانية متاحة مرتين فقط بعد التسليم الأولي.</p>
+                            <p style="white-space: pre-line;">${settings.invoiceTerms || 'لا توجد شروط إضافية.'}</p>
                             <p style="margin-top: 15px; font-weight: bold;">شكراً لثقتكم بنا!</p>
                         </div>
                     </div>
@@ -1964,6 +3073,28 @@
                 </html>
             `);
             printWindow.document.close();
+        }
+
+        function copyOrderDetails(id) {
+            const order = db.orders.find(o => o.id == id);
+            if(!order) return;
+
+            const remaining = order.price - order.paid;
+            let message = `مرحباً ${order.client}، 👋\n\n`;
+            message += `إليك تفاصيل طلبك رقم #${order.id}:\n`;
+            message += `📌 الخدمة: ${order.service}\n`;
+            message += `💰 الإجمالي: ${parseFloat(order.price).toLocaleString()} ${getCurrency()}\n`;
+            message += `✅ المدفوع: ${parseFloat(order.paid).toLocaleString()} ${getCurrency()}\n`;
+            
+            if(remaining > 0) {
+                message += `❗ المتبقي: ${remaining.toLocaleString()} ${getCurrency()}\n`;
+            } else {
+                message += `✅ الحالة: خالص\n`;
+            }
+
+            message += `\nشكراً لثقتك بنا! 🌹`;
+
+            navigator.clipboard.writeText(message).then(() => showNotification('تم نسخ التفاصيل بنجاح', 'success')).catch(() => showNotification('فشل النسخ', 'error'));
         }
 
         function sendWhatsApp(id) {
@@ -1979,9 +3110,9 @@
 
 إليك تفاصيل فاتورة طلبك رقم #${order.id}:
 📌 الخدمة: ${order.service}
-💰 الإجمالي: ${parseFloat(order.price).toLocaleString()} ج.م
-✅ المدفوع: ${parseFloat(order.paid).toLocaleString()} ج.م
-❗ المتبقي: ${remaining.toLocaleString()} ج.م
+💰 الإجمالي: ${parseFloat(order.price).toLocaleString()} ${getCurrency()}
+✅ المدفوع: ${parseFloat(order.paid).toLocaleString()} ${getCurrency()}
+❗ المتبقي: ${remaining.toLocaleString()} ${getCurrency()}
 
 شكراً لثقتك بنا! 🌹`;
 
@@ -2005,7 +3136,7 @@
 
             const remaining = order.price - order.paid;
             if(remaining > 0) {
-                message += `❗ يرجى العلم أن هناك مبلغ متبقي: ${remaining.toLocaleString()} ج.م\n\n`;
+                message += `❗ يرجى العلم أن هناك مبلغ متبقي: ${remaining.toLocaleString()} ${getCurrency()}\n\n`;
             }
 
             message += `شكراً لتعاملك معنا! 🌹`;
@@ -2078,6 +3209,10 @@
             const tbody = document.getElementById('report-table-body');
             const tfoot = document.getElementById('report-table-footer');
             const tbodyDesigners = document.getElementById('report-designers-body');
+
+            // Update Headers in Report Modal
+            const designerHeader = document.querySelector('#report-modal h4:nth-of-type(2)');
+            if(designerHeader) designerHeader.innerText = `${getDesignerLabel(true)} (المدفوعات)`;
             
             tbody.innerHTML = '';
             tbodyDesigners.innerHTML = '';
@@ -2103,6 +3238,15 @@
                 const totalPaid = mOrders.reduce((sum, o) => sum + parseFloat(o.paid), 0);
                 const collectedComm = (totalPaid * commRate) / 100; 
                 
+                // Adjustments (Bonus/Deduction) for this month
+                const mAdj = (db.adjustments || []).filter(a => {
+                    const d = new Date(a.date);
+                    return a.staffId == m.id && d.getMonth() === (month - 1) && d.getFullYear() === year;
+                });
+                const totalBonus = mAdj.filter(a => a.type === 'bonus').reduce((sum, a) => sum + parseFloat(a.amount), 0);
+                const totalDeduction = mAdj.filter(a => a.type === 'deduction').reduce((sum, a) => sum + parseFloat(a.amount), 0);
+                const netDue = collectedComm + totalBonus - totalDeduction;
+
                 // Calculate Payouts for this month
                 const mPayouts = db.payouts.filter(p => {
                     const d = new Date(p.date);
@@ -2118,9 +3262,10 @@
                 tbody.innerHTML += `
                     <tr class="hover:bg-slate-50 dark:hover:bg-slate-800 transition">
                         <td class="p-4 font-bold">${m.name} <span class="text-xs text-slate-400">(${commRate}%)</span></td>
-                        <td class="p-4">${totalSales.toLocaleString()} ج.م</td>
-                        <td class="p-4 text-blue-600 dark:text-blue-400 font-bold">${collectedComm.toLocaleString()} ج.م</td>
-                        <td class="p-4 text-emerald-600 dark:text-emerald-400 font-bold">${totalPayouts.toLocaleString()} ج.م</td>
+                        <td class="p-4">${totalSales.toLocaleString()} ${getCurrency()}</td>
+                        <td class="p-4 text-emerald-600 dark:text-emerald-400 font-bold">${netDue.toLocaleString()} ${getCurrency()} <span class="text-[10px] text-slate-400 block">(+${totalBonus} / -${totalDeduction})</span></td>
+                        <td class="p-4 text-blue-600 dark:text-blue-400 font-bold">${collectedComm.toLocaleString()} ${getCurrency()}</td>
+                        <td class="p-4 text-emerald-600 dark:text-emerald-400 font-bold">${totalPayouts.toLocaleString()} ${getCurrency()}</td>
                         <td class="p-4 text-xs text-slate-500 max-w-[200px] truncate" title="${payoutNotes}">${payoutNotes}</td>
                         <td class="p-4 text-center">
                             <button onclick="openPayoutModal(${m.id}, '${m.name}')" class="bg-emerald-100 text-emerald-600 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/50 w-8 h-8 rounded-lg transition"><i class="fas fa-hand-holding-usd"></i></button>
@@ -2135,15 +3280,34 @@
 
             tfoot.innerHTML = `
                 <td class="p-4">الإجمالي الكلي</td>
-                <td class="p-4">${grandTotalSales.toLocaleString()} ج.م</td>
-                <td class="p-4 text-blue-600 dark:text-blue-400">${grandCollectedComm.toLocaleString()} ج.م</td>
-                <td class="p-4 text-emerald-600 dark:text-emerald-400">${grandPayouts.toLocaleString()} ج.م</td>
+                <td class="p-4">${grandTotalSales.toLocaleString()} ${getCurrency()}</td>
+                <td></td>
+                <td class="p-4 text-blue-600 dark:text-blue-400">${grandCollectedComm.toLocaleString()} ${getCurrency()}</td>
+                <td class="p-4 text-emerald-600 dark:text-emerald-400">${grandPayouts.toLocaleString()} ${getCurrency()}</td>
                 <td></td>
                 <td></td>
             `;
 
             // Render Designers
             db.staff.filter(s => s.type === 'designer').forEach(d => {
+                // Calculate Earnings based on completed orders in this month
+                const dOrders = db.orders.filter(o => {
+                    const date = new Date(o.dateCreated); // Or deliveryDate? Usually commission is on completion. Let's use dateCreated for period matching or maybe completion date if available. Using dateCreated for simplicity consistent with marketers.
+                    return o.designerId == d.id && o.status === 'done' && date.getMonth() === (month - 1) && date.getFullYear() === year;
+                });
+                const totalWork = dOrders.reduce((sum, o) => sum + parseFloat(o.price), 0);
+                const commRate = parseFloat(d.commission) || 0;
+                const earnings = (totalWork * commRate) / 100;
+
+                // Adjustments
+                const dAdj = (db.adjustments || []).filter(a => {
+                    const date = new Date(a.date);
+                    return a.staffId == d.id && date.getMonth() === (month - 1) && date.getFullYear() === year;
+                });
+                const totalBonus = dAdj.filter(a => a.type === 'bonus').reduce((sum, a) => sum + parseFloat(a.amount), 0);
+                const totalDeduction = dAdj.filter(a => a.type === 'deduction').reduce((sum, a) => sum + parseFloat(a.amount), 0);
+                const netDue = earnings + totalBonus - totalDeduction;
+
                 const dPayouts = db.payouts.filter(p => {
                     const date = new Date(p.date);
                     return p.staffId == d.id && date.getMonth() === (month - 1) && date.getFullYear() === year;
@@ -2155,7 +3319,8 @@
                     <tr class="hover:bg-slate-50 dark:hover:bg-slate-800 transition">
                         <td class="p-4 font-bold">${d.name}</td>
                         <td class="p-4 text-slate-500">${d.specialty}</td>
-                        <td class="p-4 text-emerald-600 dark:text-emerald-400 font-bold">${totalDPayouts.toLocaleString()} ج.م</td>
+                        <td class="p-4 text-emerald-600 dark:text-emerald-400 font-bold">${netDue.toLocaleString()} ${getCurrency()} <span class="text-[10px] text-slate-400 block">(نسبة: ${earnings.toLocaleString()} + ${totalBonus} - ${totalDeduction})</span></td>
+                        <td class="p-4 text-emerald-600 dark:text-emerald-400 font-bold">${totalDPayouts.toLocaleString()} ${getCurrency()}</td>
                         <td class="p-4 text-xs text-slate-500 max-w-[200px] truncate" title="${dPayoutNotes}">${dPayoutNotes}</td>
                         <td class="p-4 text-center">
                             <button onclick="openPayoutModal(${d.id}, '${d.name}')" class="bg-emerald-100 text-emerald-600 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/50 w-8 h-8 rounded-lg transition"><i class="fas fa-hand-holding-usd"></i></button>
@@ -2165,15 +3330,34 @@
             });
             
             if(tbodyDesigners.innerHTML === '') {
-                tbodyDesigners.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-slate-400">لا يوجد مصممين</td></tr>';
+                tbodyDesigners.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-400">لا يوجد ${getDesignerLabel(true)}</td></tr>`;
             }
+        }
+
+        function populateServiceSelect() {
+            const select = document.getElementById('service-type');
+            const currentVal = select.value;
+            select.innerHTML = '';
+            const types = (db.settings[0] && db.settings[0].serviceTypes) ? db.settings[0].serviceTypes : defaultData.settings[0].serviceTypes;
+            types.forEach(t => {
+                select.innerHTML += `<option value="${t}">${t}</option>`;
+            });
+        }
+
+        function populateSourceSelect() {
+            const select = document.getElementById('order-source');
+            select.innerHTML = '<option value="">-- اختر المصدر --</option>';
+            const sources = (db.settings[0] && db.settings[0].orderSources) ? db.settings[0].orderSources : defaultData.settings[0].orderSources;
+            sources.forEach(s => {
+                select.innerHTML += `<option value="${s}">${s}</option>`;
+            });
         }
 
         function populateStaffSelects() {
             const mSelect = document.getElementById('order-marketer');
             const dSelect = document.getElementById('order-designer');
             mSelect.innerHTML = '<option value="">-- مباشر --</option>';
-            dSelect.innerHTML = '<option value="">-- اختر مصمم --</option>';
+            dSelect.innerHTML = `<option value="">-- اختر ${getDesignerLabel()} --</option>`;
             db.staff.filter(s => s.type === 'marketer').forEach(m => mSelect.innerHTML += `<option value="${m.id}">${m.name}</option>`);
             db.staff.filter(s => s.type === 'designer').forEach(d => dSelect.innerHTML += `<option value="${d.id}">${d.name} (${d.specialty})</option>`);
         }
@@ -2188,16 +3372,19 @@
                     document.getElementById('staff-modal-title').innerText = "إضافة مسوق";
                     document.getElementById('marketer-fields').classList.remove('hidden');
                 } else {
-                    document.getElementById('staff-modal-title').innerText = "إضافة مصمم";
+                    document.getElementById('staff-modal-title').innerText = `إضافة ${getDesignerLabel()}`;
                     document.getElementById('designer-fields').classList.remove('hidden');
                 }
             } else if (modalId === 'order-modal') {
+                populateServiceSelect(); // Populate services dynamically
+                populateSourceSelect(); // Populate sources dynamically
                 document.getElementById('order-form').reset();
                 document.getElementById('order-id').value = '';
                 document.getElementById('modal-title').innerText = "طلب جديد";
                 document.getElementById('amount-remaining').value = '0';
                 document.getElementById('design-link').value = '';
                 document.getElementById('design-notes').value = '';
+                document.getElementById('private-notes').value = '';
                 document.getElementById('amount-remaining').classList.remove('bg-emerald-50', 'text-emerald-600');
                 document.getElementById('order-commission-preview').classList.add('hidden');
                 populateStaffSelects();
@@ -2211,6 +3398,20 @@
                     document.querySelectorAll('.perm-checkbox').forEach(cb => cb.checked = false);
                     document.getElementById('user-modal-title').innerText = "إضافة مستخدم جديد";
                 }
+            } else if (modalId === 'client-modal') {
+                if(!document.getElementById('client-id').value) {
+                    document.getElementById('client-modal-name').value = '';
+                    document.getElementById('client-modal-phone').value = '';
+                    document.getElementById('client-modal-balance').value = '';
+                    document.getElementById('client-modal-title').innerText = "إضافة عميل VIP";
+                }
+            } else if (modalId === 'adjustment-modal') {
+                document.getElementById('adj-id').value = '';
+                document.getElementById('adj-amount').value = '';
+                document.getElementById('adj-reason').value = '';
+                const sSelect = document.getElementById('adj-staff');
+                sSelect.innerHTML = '';
+                db.staff.forEach(s => sSelect.innerHTML += `<option value="${s.id}">${s.name} (${s.type === 'marketer' ? 'مسوق' : getDesignerLabel()})</option>`);
             }
             const el = document.getElementById(modalId);
             el.classList.remove('hidden');
@@ -2218,6 +3419,17 @@
 
         function closeModal(modalId) {
             document.getElementById(modalId).classList.add('hidden');
+            // Reset specific modals logic
+            if(modalId === 'order-modal') {
+                document.getElementById('is-vip-order').checked = false;
+                toggleVipMode();
+            }
+            if(modalId === 'client-modal') {
+                document.getElementById('client-id').value = '';
+            }
+            if(modalId === 'adjustment-modal') {
+                document.getElementById('adj-id').value = '';
+            }
         }
 
         function openPayoutModal(id, name) {
@@ -2236,7 +3448,9 @@
             const date = document.getElementById('payout-date').value;
             const notes = document.getElementById('payout-notes').value;
             
-            db.payouts.push({ id: Date.now(), staffId, amount, date, notes });
+            const newPayout = { id: Date.now(), staffId, amount, date, notes };
+            db.payouts.push(newPayout);
+            window.firebaseAPI.save('payouts', newPayout.id, newPayout); // Save to Cloud
             saveDB();
             closeModal('payout-modal');
             renderReportTable(); // Refresh report to show new value
@@ -2253,7 +3467,148 @@
             setTimeout(() => { div.style.opacity = '0'; div.style.transform = 'translateX(-20px)'; setTimeout(() => div.remove(), 300); }, 3000);
         }
 
-        checkAuth();
+        // --- MY TASKS LOGIC ---
+        function renderMyTasks() {
+            const container = document.getElementById('my-tasks-grid');
+            container.innerHTML = '';
+            
+            if(!currentUser || !currentUser.staffId) {
+                container.innerHTML = '<div class="col-span-3 text-center py-10 text-slate-400">هذا الحساب غير مرتبط بملف موظف.</div>';
+                return;
+            }
+
+            const myOrders = db.orders.filter(o => o.designerId == currentUser.staffId && (o.status === 'pending' || o.status === 'review'));
+            
+            if(myOrders.length === 0) {
+                container.innerHTML = '<div class="col-span-3 text-center py-10 text-slate-400"><i class="fas fa-mug-hot text-4xl mb-4"></i><br>لا توجد مهام حالياً، استمتع بوقتك!</div>';
+                return;
+            }
+
+            myOrders.forEach(o => {
+                const now = Date.now();
+                const timeElapsed = o.dateAssigned ? (now - o.dateAssigned) : 0;
+                const hoursElapsed = timeElapsed / (1000 * 60 * 60);
+                const percent = Math.min((hoursElapsed / 24) * 100, 100);
+                let colorClass = 'bg-emerald-500';
+                if(percent > 50) colorClass = 'bg-yellow-500';
+                if(percent > 90) colorClass = 'bg-red-500';
+
+                container.innerHTML += `
+                    <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 card-hover relative">
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 px-3 py-1 rounded-lg text-xs font-bold">${o.service}</span>
+                            <span class="text-xs font-bold text-slate-400">#${o.id}</span>
+                        </div>
+                        <h3 class="font-bold text-lg text-slate-800 dark:text-white mb-2">${o.client}</h3>
+                        ${o.designNotes ? `<p class="text-sm text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-700/50 p-3 rounded-xl mb-4">${o.designNotes}</p>` : ''}
+                        
+                        <div class="mb-4">
+                            <div class="flex justify-between text-xs font-bold text-slate-400 mb-1">
+                                <span>الوقت المستغرق</span>
+                                <span>${Math.floor(hoursElapsed)} ساعة</span>
+                            </div>
+                            <div class="h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                                <div class="h-full ${colorClass} transition-all duration-500" style="width: ${percent}%"></div>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-2 mt-4">
+                            ${o.designLink ? `<a href="${o.designLink}" target="_blank" class="flex-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 py-2 rounded-xl text-center text-sm font-bold hover:bg-slate-200 dark:hover:bg-slate-600 transition"><i class="fas fa-link"></i> الملفات</a>` : ''}
+                            <button onclick="editOrder(${o.id})" class="flex-1 bg-indigo-600 text-white py-2 rounded-xl text-center text-sm font-bold hover:bg-indigo-700 transition">تحديث الحالة</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // --- PROFILE LOGIC ---
+        function renderProfile() {
+            if(!currentUser) return;
+            
+            document.getElementById('profile-username').innerText = currentUser.username;
+            document.getElementById('profile-avatar').innerText = currentUser.username.charAt(0).toUpperCase();
+            
+            let staff = null;
+            if(currentUser.staffId) staff = db.staff.find(s => s.id == currentUser.staffId);
+
+            if(staff) {
+                document.getElementById('profile-name').innerText = staff.name;
+                document.getElementById('profile-role').innerText = staff.type === 'marketer' ? 'مسوق' : (staff.specialty || 'مصمم');
+                document.getElementById('profile-phone').innerText = staff.phone;
+                document.getElementById('profile-commission').innerText = (staff.commission || 0) + '%';
+                document.getElementById('profile-wallet').innerText = (staff.wallet || 0).toLocaleString() + ' ' + getCurrency();
+
+                // Calculate Earnings
+                let totalEarnings = 0;
+                let monthEarnings = 0;
+                const now = new Date();
+                const currentMonth = now.getMonth();
+                const currentYear = now.getFullYear();
+
+                // Logic differs slightly for Marketer vs Designer
+                const relevantOrders = db.orders.filter(o => (staff.type === 'marketer' ? o.marketerId : o.designerId) == staff.id && o.status !== 'rejected');
+                
+                relevantOrders.forEach(o => {
+                    const d = new Date(o.dateCreated); // Or completion date
+                    const isThisMonth = d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+                    
+                    let amount = 0;
+                    if(staff.type === 'marketer') {
+                        // Marketer commission on PAID amount
+                        amount = (parseFloat(o.paid) * parseFloat(staff.commission)) / 100;
+                    } else {
+                        // Designer commission on PRICE (if done)
+                        if(o.status === 'done') amount = (parseFloat(o.price) * parseFloat(staff.commission)) / 100;
+                    }
+                    
+                    totalEarnings += amount;
+                    if(isThisMonth) monthEarnings += amount;
+                });
+
+                // Add Adjustments
+                const myAdj = (db.adjustments || []).filter(a => a.staffId == staff.id);
+                const adjBody = document.getElementById('profile-adjustments-body');
+                adjBody.innerHTML = '';
+                
+                myAdj.forEach(a => {
+                    const isBonus = a.type === 'bonus';
+                    const val = parseFloat(a.amount);
+                    totalEarnings += (isBonus ? val : -val);
+                    
+                    const d = new Date(a.date);
+                    if(d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
+                        monthEarnings += (isBonus ? val : -val);
+                    }
+
+                    adjBody.innerHTML += `
+                        <tr class="border-b border-slate-50 dark:border-slate-800 last:border-0">
+                            <td class="p-3 text-slate-500 font-mono text-xs">${d.toLocaleDateString('ar-EG')}</td>
+                            <td class="p-3"><span class="px-2 py-1 rounded text-xs font-bold ${isBonus ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}">${isBonus ? 'مكافأة' : 'خصم'}</span></td>
+                            <td class="p-3 font-bold ${isBonus ? 'text-emerald-600' : 'text-red-600'}">${val.toLocaleString()}</td>
+                            <td class="p-3 text-slate-600 dark:text-slate-300">${a.reason}</td>
+                        </tr>
+                    `;
+                });
+
+                if(myAdj.length === 0) adjBody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-slate-400">لا توجد سجلات</td></tr>';
+
+                document.getElementById('profile-total-earnings').innerText = totalEarnings.toLocaleString() + ' ' + getCurrency();
+                document.getElementById('profile-month-earnings').innerText = monthEarnings.toLocaleString() + ' ' + getCurrency();
+
+            } else {
+                // Fallback for non-linked users (e.g. pure Admin)
+                document.getElementById('profile-name').innerText = currentUser.username;
+                document.getElementById('profile-role').innerText = currentUser.role === 'admin' ? 'مدير النظام' : 'مستخدم';
+                document.getElementById('profile-phone').innerText = '-';
+                document.getElementById('profile-commission').innerText = '-';
+                document.getElementById('profile-wallet').innerText = '-';
+                document.getElementById('profile-total-earnings').innerText = '-';
+                document.getElementById('profile-month-earnings').innerText = '-';
+                document.getElementById('profile-adjustments-body').innerHTML = '<tr><td colspan="4" class="p-4 text-center text-slate-400">هذا الحساب غير مرتبط بملف مالي</td></tr>';
+            }
+        }
+
+        // checkAuth(); // Moved to firebase-ready event
     </script>
 </body>
 </html>
